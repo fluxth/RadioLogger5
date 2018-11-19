@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.pyo
+
+rlenv/
+*.db
+*.log
+*.err
+*.pid
