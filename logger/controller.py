@@ -15,7 +15,7 @@ import threading
 
 class RadioLogger(GenericThread, Printable):
 
-    _VERSION: str = '5.0.1'
+    _VERSION: str = '5.0.2'
     _MASTER = None
 
     _REFRESH: int = 1
@@ -40,37 +40,46 @@ class RadioLogger(GenericThread, Printable):
             self.info('Radio Logger v{} starting...'.format(self._VERSION))
 
             if self.IS_DAEMON:
-                self.info('Running as daemon mode.')
+                self.info('Running in daemon mode.')
 
             self.loadConfig(os.path.join(self.BASE_DIR, 'config.json'))
             self.initializeDatabaseThread()
             self.initializeStationThreads()
             self.initializeWatchdogThread()
 
-            interval = 0
+            self.mainLoop()
 
-            # TODO: Different mainloop for daemon mode
-            while True:
-                if not self.IS_DAEMON:
-                    cmd: str = input()
+        except KeyboardInterrupt:
+            self.shutdown(0, 'User quit')
 
-                    if cmd == 'quit':
-                        raise KeyboardInterrupt
-                    elif cmd == 'check':
-                        self.checkWatchdogThread(report=True)
-                        self.t_watchdog.checkThreads(report=True)
-                    elif cmd == 'init':
-                        self.spawnStationThread('Cool93')
-                    elif cmd == 'kill':
-                        self.t_stations[0].shutdown()
-                    elif cmd == 'kw':
-                        self.t_watchdog.shutdown()
-                    elif cmd == 'threads':
-                        print([(t.name, t.ident) for t in threading.enumerate()])
-                    else:
-                        print('Unknown Command')
+    def mainLoop(self):
+        # TODO: Different mainloop for daemon mode
+        while True:
+            if not self.IS_DAEMON:
 
+                cmd: str = input()
+
+                if cmd == 'quit':
+                    raise KeyboardInterrupt
+                elif cmd == 'check':
+                    self.checkWatchdogThread(report=True)
+                    self.t_watchdog.checkThreads(report=True)
+                elif cmd == 'init':
+                    self.spawnStationThread('Cool93')
+                elif cmd == 'kill':
+                    self.t_stations[0].shutdown()
+                elif cmd == 'kw':
+                    self.t_watchdog.shutdown()
+                elif cmd == 'threads':
+                    print([(t.name, t.ident) for t in threading.enumerate()])
                 else:
+                    print('Unknown Command')
+
+            else:
+                interval = 0
+
+                # Nested loop, avoid having to check for daemon mode every tick.
+                while True:
                     if interval <= 0:
                         self.checkWatchdogThread()
                         
@@ -79,9 +88,6 @@ class RadioLogger(GenericThread, Printable):
                         interval -= self._REFRESH
 
                     time.sleep(self._REFRESH)
-
-        except KeyboardInterrupt:
-            self.shutdown(0, 'User quit')
 
     def loadConfig(self, path):
         self.config = Config(path)
