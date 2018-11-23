@@ -2,7 +2,15 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.types import TypeDecorator, Integer as INTEGER
 
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, LargeBinary, Boolean, ForeignKey
+from sqlalchemy import (
+	Column, 
+	Integer, 
+	String, 
+	Text,
+	LargeBinary, 
+	Boolean, 
+	ForeignKey
+)
 
 from datetime import datetime, timezone
 
@@ -10,7 +18,7 @@ from datetime import datetime, timezone
 Base = declarative_base()
 
 
-class DoubleTimestamp(TypeDecorator):
+class PaddedTimestamp(TypeDecorator):
     impl = INTEGER
     _PAD = 1262304000 # Jan 1, 2010
 
@@ -20,17 +28,31 @@ class DoubleTimestamp(TypeDecorator):
     def process_result_value(self, value, dialect):
         return datetime.utcfromtimestamp(value + self._PAD)
 
-
 class Station(Base):
 	__tablename__ = 'stations'
 
 	id = Column(Integer, primary_key=True)
 	name = Column(String, unique=True, nullable=False)
 	tracks = relationship('Track', back_populates='station')
-	ts = Column(DoubleTimestamp, default=datetime.utcnow())
+	error_logs = relationship('ErrorLog', back_populates='station')
+	ts = Column(PaddedTimestamp, default=datetime.utcnow())
 
 	def __str__(self):
 		return '<Station {}>'.format(self.name)
+
+class ErrorLog(Base):
+	__tablename__ = 'error_logs'
+
+	id = Column(Integer, primary_key=True)
+	station_id = Column(Integer, ForeignKey('stations.id'))
+	station = relationship('Station', back_populates='error_logs')
+	owner = Column(String, nullable=False)
+	message = Column(String, nullable=False)
+	details = Column(Text)
+	ts = Column(PaddedTimestamp, default=datetime.utcnow())
+
+	def __str__(self):
+		return '<ErrorLog station={} owner={} msg={}>'.format(self.station, self.owner, self.message)
 
 class Track(Base):
 	__tablename__ = 'tracks'
@@ -43,7 +65,7 @@ class Track(Base):
 	station_id = Column(Integer, ForeignKey('stations.id'), nullable=False)
 	station = relationship('Station', back_populates='tracks')
 	plays = relationship('Play', back_populates='track')
-	ts = Column(DoubleTimestamp, default=datetime.utcnow())
+	ts = Column(PaddedTimestamp, default=datetime.utcnow())
 
 	def __str__(self):
 		return '<Track title="{}" artist="{}" station={}>'.format(
@@ -59,7 +81,7 @@ class Play(Base):
 	track_id = Column(Integer, ForeignKey('tracks.id'), nullable=False)
 	track = relationship('Track', back_populates='plays')
 	extras = Column(LargeBinary)
-	ts = Column(DoubleTimestamp, default=datetime.utcnow())
+	ts = Column(PaddedTimestamp, default=datetime.utcnow())
 
 	def __str__(self):
 		return '<Play track={}>'.format(

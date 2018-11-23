@@ -1,26 +1,26 @@
-import threading
 import time
 from queue import Queue
 
 from common.utils import Printable
+from logger.threads import BaseThread
 from logger.database import Database
 from logger.actions import DatabaseAction
 
 
-class DatabaseThread(threading.Thread, Printable):
+class DatabaseThread(BaseThread, Printable):
 
     _MASTER = None
 
-    _tname = 'DB'
+    _tname: str = 'DB'
     _config = {}
 
     q: Queue = None
     db = None
 
-    exit = False
+    exit: bool = False
 
     def __init__(self, config):
-        threading.Thread.__init__(self)
+        super().__init__(self)
         self._config = config
         self.q = Queue()
 

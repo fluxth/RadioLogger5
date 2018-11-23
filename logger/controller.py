@@ -1,3 +1,4 @@
+from logger.threads import GenericThread
 from logger.threads.Database import DatabaseThread
 from logger.threads.Station import StationThread
 from logger.threads.Watchdog import WatchdogThread
@@ -12,9 +13,14 @@ from importlib import import_module
 import threading
 
 
-class RadioLogger(Printable):
+class RadioLogger(GenericThread, Printable):
 
-    _VERSION: str = '5.0.0'
+    _VERSION: str = '5.0.1'
+    _MASTER = None
+
+    _REFRESH: int = 1
+    _INTERVAL: int = 120
+
     _tname: str = 'MAIN'
 
     IS_DAEMON: bool = False
@@ -25,6 +31,9 @@ class RadioLogger(Printable):
     t_db: DatabaseThread = None
     t_watchdog: WatchdogThread = None
     t_stations: list = []
+
+    def __init__(self):
+        self._MASTER = self
 
     def run(self):
         try:
@@ -38,6 +47,8 @@ class RadioLogger(Printable):
             self.initializeStationThreads()
             self.initializeWatchdogThread()
 
+            interval = 0
+
             # TODO: Different mainloop for daemon mode
             while True:
                 if not self.IS_DAEMON:
@@ -46,16 +57,28 @@ class RadioLogger(Printable):
                     if cmd == 'quit':
                         raise KeyboardInterrupt
                     elif cmd == 'check':
+                        self.checkWatchdogThread(report=True)
                         self.t_watchdog.checkThreads(report=True)
                     elif cmd == 'init':
                         self.spawnStationThread('Cool93')
                     elif cmd == 'kill':
                         self.t_stations[0].shutdown()
+                    elif cmd == 'kw':
+                        self.t_watchdog.shutdown()
                     elif cmd == 'threads':
                         print([(t.name, t.ident) for t in threading.enumerate()])
+                    else:
+                        print('Unknown Command')
+
                 else:
-                    for line in sys.stdin:
-                        self.error(line)
+                    if interval <= 0:
+                        self.checkWatchdogThread()
+                        
+                        interval = self._INTERVAL
+                    else:
+                        interval -= self._REFRESH
+
+                    time.sleep(self._REFRESH)
 
         except KeyboardInterrupt:
             self.shutdown(0, 'User quit')
@@ -78,6 +101,25 @@ class RadioLogger(Printable):
         self.t_watchdog = WatchdogThread()
         self.t_watchdog._MASTER = self
         self.t_watchdog.start()
+
+    def checkWatchdogThread(self, report=False):
+        if not self.t_watchdog.isAlive():
+            self.error('Watchdog thread died, respawning...')
+
+            self.initializeWatchdogThread()
+
+            self.callDatabase(
+                'logError', 
+                station=None, 
+                sender_name='MAIN',
+                message='Watchdog thread died. Last Uncaught Exception: {}'.format(
+                    self.getLastException()[1]
+                ),
+                details=self.getLastExceptionTraceback()
+            )
+        else:
+            if report is True:
+                self.info('Watchdog thread is running normally.')
 
     def spawnStationThread(self, station_name):
         s_module = import_module('stations.{}'.format(station_name))

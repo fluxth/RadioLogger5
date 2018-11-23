@@ -1,25 +1,24 @@
-import threading
 import time
 
 from common.utils import Printable
-from logger.actions import DatabaseAction
+from logger.threads import BaseThread
 
 
-class StationThread(threading.Thread, Printable):
+class StationThread(BaseThread, Printable):
 
     _MASTER = None
-    _REFRESH = 1
+    _REFRESH: int = 1
 
-    _tname = '#'
+    _tname: str = '#'
     _id = None
 
     station = None
     _stationclass = None
 
-    exit = False
+    exit: bool = False
 
     def __init__(self, station_class):
-        threading.Thread.__init__(self)
+        super().__init__(self)
 
         self._stationclass = station_class
 
@@ -40,33 +39,34 @@ class StationThread(threading.Thread, Printable):
         self.initialize()
 
         interval = 0
-        while not self.exit:
-            if interval <= 0:
-                # Do stuff
-                metadata = self.station.check()
+        try:
 
-                if metadata is not None:
-                    if not self.exit:
-                        self.debug(metadata)
-                        self.callDatabase('logPlay', station=self.station, metadata=metadata)
+            while not self.exit:
+                if interval <= 0:
+                    # Do stuff
+                    metadata = self.station.check()
 
-                interval = self.station._INTERVAL
-            else:
-                interval -= self._REFRESH
+                    if metadata is not None:
+                        if not self.exit:
+                            self.debug(metadata)
+                            self.callDatabase('logPlay', station=self.station, metadata=metadata)
 
-            time.sleep(self._REFRESH)
+                    interval = self.station._INTERVAL
+                else:
+                    interval -= self._REFRESH
 
-    def callDatabase(self, method, *args, **kwargs):
-        if not self._MASTER.t_db.isAlive():
-            self.error('Cannot save metadata, Database thread is not running.')
-            return
+                time.sleep(self._REFRESH)
 
-        action = DatabaseAction()
-        action.method = method
-        action.args = args
-        action.kwargs = kwargs
+        except Exception as e:
+            self.callDatabase(
+                'logError', 
+                station=None, 
+                sender_name='WDOG[DB]',
+                message='Database thread died. Last Uncaught Exception: {}'.format(self.getLastException()[1]),
+                details=self.getLastExceptionTraceback()
+            )
 
-        self._MASTER.t_db.q.put(action)
+            raise
 
     def shutdown(self):
         if not self.isAlive():

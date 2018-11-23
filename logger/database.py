@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
 
-from common.models import Base, Station, Track, Play
+from common.models import Base, Station, Track, Play, ErrorLog
 
 import os.path
 
@@ -109,6 +109,22 @@ class Database(object):
                 )
 
                 sess.add(play)
+
+    def logError(self, station, sender_name, message, details=None):
+        with self.session_scope() as sess:
+            if station is None:
+                db_station = None
+            else:
+                db_station = sess.query(Station).filter_by(name=station._NAME).first()
+
+            el = ErrorLog(
+                station=db_station,
+                owner=sender_name,
+                message=message,
+                details=details
+            )
+
+            sess.add(el)
 
     @contextmanager
     def session_scope(self):

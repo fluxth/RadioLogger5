@@ -61,18 +61,37 @@ class Station(object):
                 data = self.httpGet(self.getUrl())
             else:
                 data = self.httpPost(self.getUrl(), self._POSTDATA)
+            
+            metadata = self.parseResponse(data)
 
-        # Implement file logging pls
         except RequestException as e:
             self._THREAD.error('Error while fetching: {}'.format(e))
-            logging.exception('Handled RequestException: ')
-            return None
-        except JSONDecodeError as e:
-            self._THREAD.error('Error parsing JSON: {}'.format(e))
-            logging.exception('Handled JSONDecodeError: ')
+
+            # Log error to database
+            self._THREAD.callDatabase(
+                'logError', 
+                station=self, 
+                sender_name=self._THREAD.name,
+                message='Handled RequestException: {}'.format(e),
+                details='ReqURL = {}'.format(e.request.url if e.request is not None else 'None')
+            )
+
             return None
 
-        metadata = self.parseResponse(data)
+        except JSONDecodeError as e:
+            self._THREAD.error('Error parsing JSON: {}'.format(e))
+
+            # Log error to database
+            self._THREAD.callDatabase(
+                'logError', 
+                station=self, 
+                sender_name=self._THREAD.name,
+                message='Handled JsonDecodeError: {}'.format(e),
+                # details=e.doc
+                # TODO: Log corrupted json file to disk
+            )
+
+            return None
 
         if metadata is None:
             return None
