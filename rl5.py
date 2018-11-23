@@ -13,7 +13,7 @@ def init_logger():
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
-    ih = logging.FileHandler(os.path.join(BASE_DIR, 'rl5.log'), 'a')
+    ih = logging.FileHandler(os.path.join(BASE_DIR, 'rl5.log'), 'w')
     ih.setLevel(logging.INFO)
 
     eh = logging.FileHandler(os.path.join(BASE_DIR, 'rl5.err'), 'a')
@@ -58,7 +58,7 @@ if __name__ == '__main__':
                 action=daemon_run, 
                 logger=logger,
                 keep_fds=fds,
-                chdir=BASE_DIR
+                chdir=BASE_DIR,
             )
             daemon.start()
 
