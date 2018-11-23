@@ -7,7 +7,7 @@ NOTE: your class name MUST be your filename appended by "Station"
 eg. 'BaseTemplate.py' -> class BaseTemplateStation(Station)
 
 In order to enable this station, add this station's filename (without .py)
-to the rl4's `config.json` file and restart or reload the logger.
+to the rl5's `config.json` file and restart or reload the logger.
 '''
 class BaseTemplateStation(Station):
 

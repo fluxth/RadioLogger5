@@ -3,8 +3,9 @@ from requests.exceptions import RequestException
 from datetime import datetime
 from json.decoder import JSONDecodeError
 
+from common.exceptions import StationParseError
+
 import abc
-import logging
 
 
 class Station(object):
@@ -62,8 +63,6 @@ class Station(object):
             else:
                 data = self.httpPost(self.getUrl(), self._POSTDATA)
             
-            metadata = self.parseResponse(data)
-
         except RequestException as e:
             self._THREAD.error('Error while fetching: {}'.format(e))
 
@@ -77,6 +76,10 @@ class Station(object):
             )
 
             return None
+
+        try:
+
+            metadata = self.parseResponse(data)
 
         except JSONDecodeError as e:
             self._THREAD.error('Error parsing JSON: {}'.format(e))
@@ -92,6 +95,22 @@ class Station(object):
             )
 
             return None
+
+        except StationParseError as e:
+            self._THREAD.error('Error parsing metadata: {}'.format(e))
+
+            # Log error to database
+            self._THREAD.callDatabase(
+                'logError', 
+                station=self, 
+                sender_name=self._THREAD.name,
+                message='Handled StationParseError: {}'.format(e),
+                # details=e.doc
+                # TODO: Log parse error w/ file to disk
+            )
+
+            return None
+
 
         if metadata is None:
             return None

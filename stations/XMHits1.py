@@ -20,7 +20,7 @@ class XMHits1Station(Station):
         resp = data['channelMetadataResponse']
         
         if resp['messages']['code'] != 100:
-            return None
+            raise StationParseError('Endpoint returned invalid status code', resp['messages']['code'])
 
         current = resp['metaData']['currentEvent']
 

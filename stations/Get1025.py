@@ -11,7 +11,7 @@ class Get1025Station(Station):
         data = payload.json()
 
         if data['status'] != '200':
-            raise StationParseError()
+            raise StationParseError('Endpoint returned invalid status code', data['status'])
 
         current = data['entries']['songnow']
 
