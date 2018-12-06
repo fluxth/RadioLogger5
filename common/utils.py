@@ -1,7 +1,6 @@
 import os.path
-import sys
 import json
-import codecs
+from codecs import open as copen
 import logging
 from datetime import datetime
 
@@ -69,11 +68,11 @@ class Config(object):
             raise ConfigurationError('Config file at "{}" not found.'.format(path))
 
     def save(self):
-        with codecs.open(self._path, 'w', 'utf-8') as f:
+        with copen(self._path, 'w', 'utf-8') as f:
             json.dump(self._config, f)
 
     def load(self):
-        with codecs.open(self._path, 'r', 'utf-8') as f:
+        with copen(self._path, 'r', 'utf-8') as f:
             try:
                 self._config = json.load(f)
             except json.decoder.JSONDecodeError as m:
@@ -85,8 +84,3 @@ class Config(object):
     def set(self, key, value):
         raise NotImplementedError('config.set is currently not avaliable')
         self.save()
-
-
-
-
-

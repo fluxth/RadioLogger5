@@ -1,4 +1,3 @@
-import time
 from queue import Queue
 
 from common.utils import Printable
@@ -9,15 +8,11 @@ from logger.actions import DatabaseAction
 
 class DatabaseThread(BaseThread, Printable):
 
-    _MASTER = None
-
     _tname: str = 'DB'
     _config = {}
 
     q: Queue = None
     db = None
-
-    exit: bool = False
 
     def __init__(self, config):
         super().__init__(self)

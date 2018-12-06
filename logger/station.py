@@ -5,7 +5,7 @@ from json.decoder import JSONDecodeError
 
 from common.exceptions import StationParseError
 
-import abc
+from abc import abstractmethod
 
 
 class Station(object):
@@ -126,7 +126,7 @@ class Station(object):
 
         return metadata
 
-    @abc.abstractmethod
+    @abstractmethod
     def parseResponse(self, payload):
         # Returns Metadata object
         raise NotImplementedError('<{}> ParseResponse not implemented.'.format(

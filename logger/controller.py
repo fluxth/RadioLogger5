@@ -4,10 +4,9 @@ from logger.threads.Station import StationThread
 from logger.threads.Watchdog import WatchdogThread
 from common.utils import Config, Printable
 
-import sys
-import time
-import os.path
-import logging
+from sys import exit
+from time import sleep
+from os import path
 from importlib import import_module
 
 import threading
@@ -15,8 +14,7 @@ import threading
 
 class RadioLogger(GenericThread, Printable):
 
-    _VERSION: str = '5.0.2'
-    _MASTER = None
+    _VERSION: str = '5.0.3'
 
     _REFRESH: int = 1
     _INTERVAL: int = 120
@@ -42,7 +40,7 @@ class RadioLogger(GenericThread, Printable):
             if self.IS_DAEMON:
                 self.info('Running in daemon mode.')
 
-            self.loadConfig(os.path.join(self.BASE_DIR, 'config.json'))
+            self.loadConfig(path.join(self.BASE_DIR, 'config.json'))
             self.initializeDatabaseThread()
             self.initializeStationThreads()
             self.initializeWatchdogThread()
@@ -56,25 +54,7 @@ class RadioLogger(GenericThread, Printable):
         # TODO: Different mainloop for daemon mode
         while True:
             if not self.IS_DAEMON:
-
-                cmd: str = input()
-
-                if cmd == 'quit':
-                    raise KeyboardInterrupt
-                elif cmd == 'check':
-                    self.checkWatchdogThread(report=True)
-                    self.t_watchdog.checkThreads(report=True)
-                elif cmd == 'init':
-                    self.spawnStationThread('Cool93')
-                elif cmd == 'kill':
-                    self.t_stations[0].shutdown()
-                elif cmd == 'kw':
-                    self.t_watchdog.shutdown()
-                elif cmd == 'threads':
-                    print([(t.name, t.ident) for t in threading.enumerate()])
-                else:
-                    print('Unknown Command')
-
+                self.processCommand(input())
             else:
                 interval = 0
 
@@ -87,7 +67,26 @@ class RadioLogger(GenericThread, Printable):
                     else:
                         interval -= self._REFRESH
 
-                    time.sleep(self._REFRESH)
+                    sleep(self._REFRESH)
+
+    def processCommand(self, cmd):
+        # TODO: Refactor
+
+        if cmd == 'quit':
+            raise KeyboardInterrupt
+        elif cmd == 'check':
+            self.checkWatchdogThread(report=True)
+            self.t_watchdog.checkThreads(report=True)
+        elif cmd == 'init':
+            self.spawnStationThread('Cool93')
+        elif cmd == 'kill':
+            self.t_stations[0].shutdown()
+        elif cmd == 'kw':
+            self.t_watchdog.shutdown()
+        elif cmd == 'threads':
+            print([(t.name, t.ident) for t in threading.enumerate()])
+        else:
+            print('Unknown Command')
 
     def loadConfig(self, path):
         self.config = Config(path)
@@ -169,4 +168,4 @@ class RadioLogger(GenericThread, Printable):
             self.t_db.shutdown()
 
         self.warning('Terminating...')
-        sys.exit(exit_code)
+        exit(exit_code)

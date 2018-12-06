@@ -1,4 +1,4 @@
-import time
+from time import sleep
 
 from common.utils import Printable
 from logger.threads import BaseThread
@@ -6,7 +6,6 @@ from logger.threads import BaseThread
 
 class StationThread(BaseThread, Printable):
 
-    _MASTER = None
     _REFRESH: int = 1
 
     _tname: str = '#'
@@ -14,8 +13,6 @@ class StationThread(BaseThread, Printable):
 
     station = None
     _stationclass = None
-
-    exit: bool = False
 
     def __init__(self, station_class):
         super().__init__(self)
@@ -55,7 +52,7 @@ class StationThread(BaseThread, Printable):
                 else:
                     interval -= self._REFRESH
 
-                time.sleep(self._REFRESH)
+                sleep(self._REFRESH)
 
         except Exception as e:
             self.callDatabase(

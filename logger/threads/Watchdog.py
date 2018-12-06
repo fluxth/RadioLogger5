@@ -1,5 +1,5 @@
-import threading
-import time
+from threading import Lock
+from time import sleep
 
 from common.utils import Printable
 from logger.threads import BaseThread
@@ -7,20 +7,16 @@ from logger.threads import BaseThread
 
 class WatchdogThread(BaseThread, Printable):
 
-    _MASTER = None
     _REFRESH: int = 1
-
     _INTERVAL: int = 20
 
     _tname: str = 'WDOG'
 
-    _lock: threading.Lock = None
-
-    exit: bool = False
+    _lock: Lock = None
 
     def __init__(self):
         super().__init__(self)
-        self._lock = threading.Lock()
+        self._lock = Lock()
 
         self.name = self._tname
 
@@ -36,7 +32,7 @@ class WatchdogThread(BaseThread, Printable):
             else:
                 interval -= self._REFRESH
 
-            time.sleep(self._REFRESH)
+            sleep(self._REFRESH)
 
     def checkThreads(self, report=False):
         if not self._MASTER.t_db.isAlive():

@@ -1,12 +1,12 @@
-import threading
+from threading import Thread
+from traceback import format_exception
 import sys
-import traceback
 
 from logger.actions import DatabaseAction
 
-class GenericThread():
+class GenericThread(object):
     _MASTER = None
-    
+
     def callDatabase(self, method, *args, **kwargs):
         if not self._MASTER.t_db.isAlive():
             self.error('"db.{}" not avaliable, Database thread is not running.'.format(method))
@@ -31,17 +31,17 @@ class GenericThread():
         if lt is None:
             return None
 
-        tb = traceback.format_exception(lt, lv, ltb)
+        tb = format_exception(lt, lv, ltb)
         return ''.join(tb)
 
-class BaseThread(GenericThread, threading.Thread):
+class BaseThread(GenericThread, Thread):
 
     _tname: str = 'thread'
 
     exit: bool = False
 
     def __init__(self, *args, **kwargs):
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
 
     def shutdown(self):
         if not self.isAlive():
