@@ -9,10 +9,10 @@ from logger.actions import DatabaseAction
 class DatabaseThread(BaseThread, Printable):
 
     _tname: str = 'DB'
-    _config = {}
+    _config: dict = {}
 
     q: Queue = None
-    db = None
+    db: Database = None
 
     def __init__(self, config):
         super().__init__(self)

@@ -9,7 +9,7 @@ class StationThread(BaseThread, Printable):
     _REFRESH: int = 1
 
     _tname: str = '#'
-    _id = None
+    _id: int = None
 
     station = None
     _stationclass = None
@@ -57,10 +57,12 @@ class StationThread(BaseThread, Printable):
         except Exception as e:
             self.callDatabase(
                 'logError', 
-                station=None, 
-                sender_name='WDOG[DB]',
-                message='Database thread died. Last Uncaught Exception: {}'.format(self.getLastException()[1]),
-                details=self.getLastExceptionTraceback()
+                station=self.station, 
+                sender_name=self._tname,
+                message='{} logger ran into an uncaught exception: {}'.format(
+                    self.station._NAME,
+                    e
+                )
             )
 
             raise

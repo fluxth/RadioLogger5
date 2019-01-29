@@ -34,48 +34,94 @@ class WatchdogThread(BaseThread, Printable):
 
             sleep(self._REFRESH)
 
-    def checkThreads(self, report=False):
+    def checkThreads(self, respawn=True, report=False):
+        status = {
+            'stations': {}
+        }
+
         if not self._MASTER.t_db.isAlive():
-            self.error('Database thread died, respawning...')
-
-            with self._lock:
-                self._MASTER.initializeDatabaseThread()
-
-            # Log error to database
-            self.callDatabase(
-                'logError', 
-                station=None, 
-                sender_name='WDOG[DB]',
-                message='Database thread died. Last Uncaught Exception: {}'.format(self.getLastException()[1]),
-                details=self.getLastExceptionTraceback()
-            )
-
-
-        else:
-            if report is True:
-                self.info('Database thread is running normally.')
-
-        for t_station in self._MASTER.t_stations:
-            if not t_station.isAlive():
-                self.error('Thread {} died, respawning...'.format(t_station.name))
+            if respawn:
+                self.error('Database thread died, respawning...')
 
                 with self._lock:
-                    self._MASTER.spawnStationThread(t_station.station._NAME)
+                    self._MASTER.initializeDatabaseThread()
 
                 # Log error to database
                 self.callDatabase(
                     'logError', 
-                    station=t_station.station, 
-                    sender_name='WDOG[{}]'.format(t_station.name),
-                    message='Thread {} died. Last Uncaught Exception: {}'.format(
-                        t_station.name, self.getLastException()[1]
-                    ),
+                    station=None, 
+                    sender_name='WDOG[DB]',
+                    message='Database thread died. Last Uncaught Exception: {}'.format(self.getLastException()[1]),
                     details=self.getLastExceptionTraceback()
                 )
+            else:
+                self.error('Database thread died.')
+
+            status['db'] = False
+        else:
+            if report is True:
+                self.info('Database thread is running normally.')
+
+            status['db'] = True
+            
+
+        if not self._MASTER.t_io.isAlive():
+            if respawn:
+                self.error('I/O thread died, respawning...')
+
+                with self._lock:
+                    self._MASTER.initializeIOThread()
+
+                # Log error to database
+                self.callDatabase(
+                    'logError', 
+                    station=None, 
+                    sender_name='WDOG[IO]',
+                    message='IO thread died. Last Uncaught Exception: {}'.format(self.getLastException()[1]),
+                    details=self.getLastExceptionTraceback()
+                )
+            else:
+                self.error('I/O thread died.')
+
+            status['io'] = False
+
+        else:
+            if report is True:
+                self.info('I/O thread is running normally.')
+
+            status['io'] = True
+
+
+        for t_station in self._MASTER.t_stations:
+            if not t_station.isAlive():
+                if respawn:
+                    self.error('Thread {} died, respawning...'.format(t_station.name))
+
+                    with self._lock:
+                        self._MASTER.spawnStationThread(t_station.station._NAME)
+
+                    # Log error to database
+                    self.callDatabase(
+                        'logError', 
+                        station=t_station.station, 
+                        sender_name='WDOG[{}]'.format(t_station.name),
+                        message='Thread {} died. Last Uncaught Exception: {}'.format(
+                            t_station.name, self.getLastException()[1]
+                        ),
+                        details=self.getLastExceptionTraceback()
+                    )
+                else:
+                    self.error('Thread {} died.'.format(t_station.name))
+
+                status['stations'][t_station.station._NAME] = False
 
             else:
                 if report is True:
                     self.info('Thread {} is running normally.'.format(t_station.name))
+
+                status['stations'][t_station.station._NAME] = True    
+
+        return status            
 
     def shutdown(self):
         if not self.isAlive():
@@ -87,6 +133,3 @@ class WatchdogThread(BaseThread, Printable):
 
         self.warning('Watchdog disabled.')
         return self.join()
-
-
-
