@@ -7,6 +7,9 @@ from logger.actions import DatabaseAction
 class GenericThread(object):
     _MASTER = None
 
+    _tname: str = 'thread'
+
+
     def callDatabase(self, method, *args, **kwargs):
         if not self._MASTER.t_db.isAlive():
             self.error('"db.{}" not avaliable, Database thread is not running.'.format(method))
@@ -36,9 +39,8 @@ class GenericThread(object):
 
 class BaseThread(GenericThread, Thread):
 
-    _tname: str = 'thread'
-
     exit: bool = False
+
 
     def __init__(self, *args, **kwargs):
         Thread.__init__(self)

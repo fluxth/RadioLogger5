@@ -2,6 +2,7 @@ from logger.threads import GenericThread
 from logger.threads.Database import DatabaseThread
 from logger.threads.Station import StationThread
 from logger.threads.Watchdog import WatchdogThread
+from logger.threads.IO import IOThread
 from common.utils import Config, Printable
 
 from sys import exit
@@ -14,7 +15,7 @@ import threading
 
 class RadioLogger(GenericThread, Printable):
 
-    _VERSION: str = '5.0.3'
+    _VERSION: str = '5.0.4'
 
     _REFRESH: int = 1
     _INTERVAL: int = 120
@@ -28,6 +29,7 @@ class RadioLogger(GenericThread, Printable):
 
     t_db: DatabaseThread = None
     t_watchdog: WatchdogThread = None
+    t_io: IOThread = None
     t_stations: list = []
 
     def __init__(self):
@@ -42,6 +44,7 @@ class RadioLogger(GenericThread, Printable):
 
             self.loadConfig(path.join(self.BASE_DIR, 'config.json'))
             self.initializeDatabaseThread()
+            self.initializeIOThread()
             self.initializeStationThreads()
             self.initializeWatchdogThread()
 
@@ -54,7 +57,7 @@ class RadioLogger(GenericThread, Printable):
         # TODO: Different mainloop for daemon mode
         while True:
             if not self.IS_DAEMON:
-                self.processCommand(input())
+                self.t_io.processCommand(input(), echo=True)
             else:
                 interval = 0
 
@@ -69,25 +72,6 @@ class RadioLogger(GenericThread, Printable):
 
                     sleep(self._REFRESH)
 
-    def processCommand(self, cmd):
-        # TODO: Refactor
-
-        if cmd == 'quit':
-            raise KeyboardInterrupt
-        elif cmd == 'check':
-            self.checkWatchdogThread(report=True)
-            self.t_watchdog.checkThreads(report=True)
-        elif cmd == 'init':
-            self.spawnStationThread('Cool93')
-        elif cmd == 'kill':
-            self.t_stations[0].shutdown()
-        elif cmd == 'kw':
-            self.t_watchdog.shutdown()
-        elif cmd == 'threads':
-            print([(t.name, t.ident) for t in threading.enumerate()])
-        else:
-            print('Unknown Command')
-
     def loadConfig(self, path):
         self.config = Config(path)
 
@@ -95,6 +79,11 @@ class RadioLogger(GenericThread, Printable):
         self.t_db = DatabaseThread(self.config.get('database'))
         self.t_db._MASTER = self
         self.t_db.start()
+
+    def initializeIOThread(self):
+        self.t_io = IOThread()
+        self.t_io._MASTER = self
+        self.t_io.start()
 
     def initializeStationThreads(self):
         station_list: list = self.config.get('enabled_stations')
@@ -122,13 +111,21 @@ class RadioLogger(GenericThread, Printable):
                 ),
                 details=self.getLastExceptionTraceback()
             )
+            return False
         else:
             if report is True:
                 self.info('Watchdog thread is running normally.')
+            return True
 
     def spawnStationThread(self, station_name):
-        s_module = import_module('stations.{}'.format(station_name))
-        s_class = getattr(s_module, '{}Station'.format(station_name))
+        try:
+            s_module = import_module('stations.{}'.format(station_name))
+            s_class = getattr(s_module, '{}Station'.format(station_name))
+        except (ModuleNotFoundError, AttributeError):
+            self.error('Station "{}" not found.'.format(
+                station_name
+            ))
+            return False
 
         old_thread_id = None
         for t_station in self.t_stations:
@@ -156,9 +153,14 @@ class RadioLogger(GenericThread, Printable):
     def shutdown(self, exit_code=0, reason=None):
         if reason is not None:
             self.info('{}, shutdown sequence initiated.'.format(reason))
+        else:
+            self.info('Shutdown sequence initiated.')
 
         if self.t_watchdog is not None:
             self.t_watchdog.shutdown()
+
+        if self.t_io is not None:
+            self.t_io.shutdown()
 
         for t_station in self.t_stations:
             if t_station is not None:

@@ -34,12 +34,17 @@ class WatchdogThread(BaseThread, Printable):
 
             sleep(self._REFRESH)
 
-    def checkThreads(self, report=False):
-        if not self._MASTER.t_db.isAlive():
-            self.error('Database thread died, respawning...')
+    def checkThreads(self, respawn=True, report=False):
+        status = {
+            'stations': {}
+        }
 
-            with self._lock:
-                self._MASTER.initializeDatabaseThread()
+        if not self._MASTER.t_db.isAlive():
+            if respawn:
+                self.error('Database thread died, respawning...')
+
+                with self._lock:
+                    self._MASTER.initializeDatabaseThread()
 
             # Log error to database
             self.callDatabase(
@@ -50,10 +55,37 @@ class WatchdogThread(BaseThread, Printable):
                 details=self.getLastExceptionTraceback()
             )
 
-
+            status['db'] = False
         else:
             if report is True:
                 self.info('Database thread is running normally.')
+
+            status['db'] = True
+            
+
+        if not self._MASTER.t_io.isAlive():
+            self.error('IO thread died, respawning...')
+
+            with self._lock:
+                self._MASTER.initializeIOThread()
+
+            # Log error to database
+            self.callDatabase(
+                'logError', 
+                station=None, 
+                sender_name='WDOG[IO]',
+                message='IO thread died. Last Uncaught Exception: {}'.format(self.getLastException()[1]),
+                details=self.getLastExceptionTraceback()
+            )
+
+            status['io'] = False
+
+        else:
+            if report is True:
+                self.info('IO thread is running normally.')
+
+            status['io'] = True
+
 
         for t_station in self._MASTER.t_stations:
             if not t_station.isAlive():
@@ -73,9 +105,15 @@ class WatchdogThread(BaseThread, Printable):
                     details=self.getLastExceptionTraceback()
                 )
 
+                status['stations'][t_station.station._NAME] = False
+
             else:
                 if report is True:
                     self.info('Thread {} is running normally.'.format(t_station.name))
+
+                status['stations'][t_station.station._NAME] = True    
+
+        return status            
 
     def shutdown(self):
         if not self.isAlive():
