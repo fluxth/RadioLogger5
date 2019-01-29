@@ -96,25 +96,28 @@ class RadioLogger(GenericThread, Printable):
         self.t_watchdog._MASTER = self
         self.t_watchdog.start()
 
-    def checkWatchdogThread(self, report=False):
+    def checkWatchdogThread(self, report=False, respawn=True):
         if not self.t_watchdog.isAlive():
-            self.error('Watchdog thread died, respawning...')
+            if respawn:
+                self.error('Watchdog thread died, respawning...')
 
-            self.initializeWatchdogThread()
+                self.initializeWatchdogThread()
 
-            self.callDatabase(
-                'logError', 
-                station=None, 
-                sender_name='MAIN',
-                message='Watchdog thread died. Last Uncaught Exception: {}'.format(
-                    self.getLastException()[1]
-                ),
-                details=self.getLastExceptionTraceback()
-            )
+                self.callDatabase(
+                    'logError', 
+                    station=None, 
+                    sender_name='MAIN',
+                    message='Watchdog thread died. Last Uncaught Exception: {}'.format(
+                        self.getLastException()[1]
+                    ),
+                    details=self.getLastExceptionTraceback()
+                )
+
             return False
         else:
             if report is True:
                 self.info('Watchdog thread is running normally.')
+                
             return True
 
     def spawnStationThread(self, station_name):
