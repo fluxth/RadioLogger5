@@ -9,7 +9,7 @@ class EDS885Station(Station):
 
     _URL = 'http://www.everydaystation.com/billboard'
 
-    def extractXml(self, xml):
+    def extractFromXml(self, xml):
         title = None
         artists = []
         extras = {}
@@ -18,12 +18,24 @@ class EDS885Station(Station):
         for media in event:
             if media.tag == '{urn:schemas-rcsworks-com:SongSchema}Song':
                 title = media.attrib['title'].strip()
+
+                extras['id'] = media.attrib['ID'].strip()
                 extras['category'] = media.attrib['category'].strip()
+
                 for detail in media:
                     if detail.tag == '{urn:schemas-rcsworks-com:SongSchema}Artist':
                         artists.append(detail.attrib['name'].strip())
 
-                return title, artists, extras
+                return Metadata(title=title, artist='/'.join(artists), extraData=extras)
+
+            # Check if there is another Link after this occurrance
+            elif media.tag == '{urn:schemas-rcsworks-com:SongSchema}Link':
+                if len(xml) > 1:
+                    next_event = xml[1]
+
+                    for next_media in next_event:
+                        if next_media.tag == '{urn:schemas-rcsworks-com:SongSchema}Link':
+                            return Metadata(default=True)
 
     def parseResponse(self, payload):
         data = payload.content.decode('tis-620')
@@ -33,11 +45,10 @@ class EDS885Station(Station):
 
         try:
             xml = et.fromstring(data)
-            title, artists, extras = self.extractXml(xml)
+            metadata = self.extractFromXml(xml)
         except TypeError:
             return None
 
-        metadata = Metadata(title=title, artist='/'.join(artists), extraData=extras)
         return metadata
 
     def isDefaultMetadata(self, metadata):
