@@ -69,9 +69,13 @@ class IOThread(BaseThread, Printable):
         result = ''
         error = None
 
-        if cmd == 'quit':
-            self._MASTER.shutdown()
-            # pass
+        if cmd == 'info':
+            ver = self._MASTER._VERSION
+
+            if echo:
+                self.info('v{}'.format(ver))
+
+            result = { 'version': ver }
 
         elif cmd == 'check' or cmd == 'status':
             respawn = True
@@ -99,8 +103,16 @@ class IOThread(BaseThread, Printable):
 
             result = threads
 
+        elif cmd == 'stations':
+            stations = self._MASTER.config.get('enabled_stations')
+            if echo:
+                self.info('Enabled stations: {}'.format(stations))
+
+            result = stations
+
         else:
             error = 'Unknown Command: {}'.format(cmd)
+            
 
         if error is not None:
             self.warning(error)
