@@ -54,6 +54,8 @@ class WatchdogThread(BaseThread, Printable):
                     message='Database thread died. Last Uncaught Exception: {}'.format(self.getLastException()[1]),
                     details=self.getLastExceptionTraceback()
                 )
+            else:
+                self.error('Database thread died.')
 
             status['db'] = False
         else:
@@ -65,7 +67,7 @@ class WatchdogThread(BaseThread, Printable):
 
         if not self._MASTER.t_io.isAlive():
             if respawn:
-                self.error('IO thread died, respawning...')
+                self.error('I/O thread died, respawning...')
 
                 with self._lock:
                     self._MASTER.initializeIOThread()
@@ -78,12 +80,14 @@ class WatchdogThread(BaseThread, Printable):
                     message='IO thread died. Last Uncaught Exception: {}'.format(self.getLastException()[1]),
                     details=self.getLastExceptionTraceback()
                 )
+            else:
+                self.error('I/O thread died.')
 
             status['io'] = False
 
         else:
             if report is True:
-                self.info('IO thread is running normally.')
+                self.info('I/O thread is running normally.')
 
             status['io'] = True
 
@@ -106,6 +110,8 @@ class WatchdogThread(BaseThread, Printable):
                         ),
                         details=self.getLastExceptionTraceback()
                     )
+                else:
+                    self.error('Thread {} died.'.format(t_station.name))
 
                 status['stations'][t_station.station._NAME] = False
 
@@ -127,6 +133,3 @@ class WatchdogThread(BaseThread, Printable):
 
         self.warning('Watchdog disabled.')
         return self.join()
-
-
-

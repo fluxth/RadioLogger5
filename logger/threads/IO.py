@@ -67,31 +67,52 @@ class IOThread(BaseThread, Printable):
 
     def processCommand(self, cmd, echo=False):
         result = ''
+        error = None
 
         if cmd == 'quit':
             self._MASTER.shutdown()
             # pass
 
-        elif cmd == 'check':
-            wd_status = self._MASTER.checkWatchdogThread(report=echo)
-            status = self._MASTER.t_watchdog.checkThreads(report=echo)
+        elif cmd == 'check' or cmd == 'status':
+            respawn = True
+            if cmd == 'status':
+                respawn = False
+
+            wd_status = self._MASTER.checkWatchdogThread(report=echo, respawn=respawn)
+            status = self._MASTER.t_watchdog.checkThreads(report=echo, respawn=respawn)
             status['watchdog'] = wd_status
 
             result = status
             
-        # elif cmd == 'init':
-        #     self.spawnStationThread('Cool93')
-        # elif cmd == 'kill':
-        #     self.t_stations[0].shutdown()
-        # elif cmd == 'kw':
-        #     self.t_watchdog.shutdown()
         elif cmd == 'threads':
-            print([(t.name, t.ident) for t in threading.enumerate()])
+            threads = [
+                {
+                    'name': t.name, 
+                    'ident': t.ident,
+                    'alive': t.is_alive()
+                } for t in threading.enumerate()
+            ]
+
+            if echo:
+                for t in threads:
+                    print('Thread ID={} [{}] / isAlive: {}'.format(t['ident'], t['name'], t['alive']))
+
+            result = threads
 
         else:
-            print('Unknown Command: {}'.format(cmd))
+            error = 'Unknown Command: {}'.format(cmd)
 
-        return json.dumps(result)
+        if error is not None:
+            self.warning(error)
+            return json.dumps({
+                'status': 'error',
+                'message': error 
+            }, separators=(',',':'))
+
+        return json.dumps({
+            'status': 'ok',
+            'data': result
+        }, separators=(',',':'))
 
     def shutdown(self):
         if not self.isAlive():
@@ -103,5 +124,5 @@ class IOThread(BaseThread, Printable):
         self.sock.close()
         self.removeOldSocketFile()
 
-        self.warning('IO shutting down.')
+        self.warning('I/O shutting down.')
         return self.join()

@@ -112,12 +112,14 @@ class RadioLogger(GenericThread, Printable):
                     ),
                     details=self.getLastExceptionTraceback()
                 )
+            else:
+                self.error('Watchdog thread died.')
 
             return False
         else:
             if report is True:
                 self.info('Watchdog thread is running normally.')
-                
+
             return True
 
     def spawnStationThread(self, station_name):
