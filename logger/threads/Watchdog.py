@@ -46,14 +46,14 @@ class WatchdogThread(BaseThread, Printable):
                 with self._lock:
                     self._MASTER.initializeDatabaseThread()
 
-            # Log error to database
-            self.callDatabase(
-                'logError', 
-                station=None, 
-                sender_name='WDOG[DB]',
-                message='Database thread died. Last Uncaught Exception: {}'.format(self.getLastException()[1]),
-                details=self.getLastExceptionTraceback()
-            )
+                # Log error to database
+                self.callDatabase(
+                    'logError', 
+                    station=None, 
+                    sender_name='WDOG[DB]',
+                    message='Database thread died. Last Uncaught Exception: {}'.format(self.getLastException()[1]),
+                    details=self.getLastExceptionTraceback()
+                )
 
             status['db'] = False
         else:
@@ -64,19 +64,20 @@ class WatchdogThread(BaseThread, Printable):
             
 
         if not self._MASTER.t_io.isAlive():
-            self.error('IO thread died, respawning...')
+            if respawn:
+                self.error('IO thread died, respawning...')
 
-            with self._lock:
-                self._MASTER.initializeIOThread()
+                with self._lock:
+                    self._MASTER.initializeIOThread()
 
-            # Log error to database
-            self.callDatabase(
-                'logError', 
-                station=None, 
-                sender_name='WDOG[IO]',
-                message='IO thread died. Last Uncaught Exception: {}'.format(self.getLastException()[1]),
-                details=self.getLastExceptionTraceback()
-            )
+                # Log error to database
+                self.callDatabase(
+                    'logError', 
+                    station=None, 
+                    sender_name='WDOG[IO]',
+                    message='IO thread died. Last Uncaught Exception: {}'.format(self.getLastException()[1]),
+                    details=self.getLastExceptionTraceback()
+                )
 
             status['io'] = False
 
@@ -89,21 +90,22 @@ class WatchdogThread(BaseThread, Printable):
 
         for t_station in self._MASTER.t_stations:
             if not t_station.isAlive():
-                self.error('Thread {} died, respawning...'.format(t_station.name))
+                if respawn:
+                    self.error('Thread {} died, respawning...'.format(t_station.name))
 
-                with self._lock:
-                    self._MASTER.spawnStationThread(t_station.station._NAME)
+                    with self._lock:
+                        self._MASTER.spawnStationThread(t_station.station._NAME)
 
-                # Log error to database
-                self.callDatabase(
-                    'logError', 
-                    station=t_station.station, 
-                    sender_name='WDOG[{}]'.format(t_station.name),
-                    message='Thread {} died. Last Uncaught Exception: {}'.format(
-                        t_station.name, self.getLastException()[1]
-                    ),
-                    details=self.getLastExceptionTraceback()
-                )
+                    # Log error to database
+                    self.callDatabase(
+                        'logError', 
+                        station=t_station.station, 
+                        sender_name='WDOG[{}]'.format(t_station.name),
+                        message='Thread {} died. Last Uncaught Exception: {}'.format(
+                            t_station.name, self.getLastException()[1]
+                        ),
+                        details=self.getLastExceptionTraceback()
+                    )
 
                 status['stations'][t_station.station._NAME] = False
 
