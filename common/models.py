@@ -14,6 +14,8 @@ from sqlalchemy import (
 
 from datetime import datetime, timezone
 
+from passlib.hash import bcrypt
+
 
 Base = declarative_base()
 
@@ -87,3 +89,23 @@ class Play(Base):
 		return '<Play track={}>'.format(
 			self.track
 		)
+
+class User(Base):
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True)
+    username = Column(String(15), nullable=False, unique=True)
+    email = Column(String(300))
+    password = Column(String(300), nullable=False)
+    perms = Column(Integer, default=0)
+
+    def __init__(self, username, password, email):
+        self.username = username
+        self.password = bcrypt.encrypt(password)
+        self.email = email
+
+    def validate_password(self, password):
+        return bcrypt.verify(password, self.password)
+
+    def __repr__(self):
+        return "<User(username ='%s', password='%s', email='%s')>" % (self.username, self.password, self.email)
