@@ -1,4 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.types import TypeDecorator, Integer as INTEGER
 
 from sqlalchemy.orm import relationship
@@ -15,6 +16,9 @@ from sqlalchemy import (
 from datetime import datetime, timezone
 
 from passlib.hash import bcrypt
+import msgpack
+
+from common.utils import resolve_dict
 
 
 Base = declarative_base()
@@ -68,6 +72,40 @@ class Track(Base):
 	station = relationship('Station', back_populates='tracks')
 	plays = relationship('Play', back_populates='track')
 	ts = Column(PaddedTimestamp, default=datetime.utcnow())
+
+	def get_extra(self, key, raise_error=True):
+		try:
+			if self.extras is None:
+				raise KeyError(key)
+
+			orig = msgpack.unpackb(self.extras, encoding='utf-8')
+			#print(orig)
+			return resolve_dict(orig, key)
+		except KeyError:
+			if not raise_error:
+				return None
+			raise
+
+	def set_extra(self, key, value):
+		orig = {}
+		if self.extras is not None:
+			orig = msgpack.unpackb(self.extras, encoding='utf-8')
+
+		def put(d, keys, item):
+			if "." in keys:
+				key, rest = keys.split(".", 1)
+				if key not in d:
+					d[key] = {}
+				put(d[key], rest, item)
+			else:
+				d[keys] = item
+
+		put(orig, key, value)
+
+		self.extras = msgpack.packb(orig, use_bin_type=True)
+			
+	def merge_extra(self, in_dict):
+		pass
 
 	def __str__(self):
 		return '<Track title="{}" artist="{}" station={}>'.format(
