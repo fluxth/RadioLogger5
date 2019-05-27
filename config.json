@@ -8,5 +8,12 @@
 		"EDS885",
 		"XMHits1",
 		"Greenwave1065"
-	]
+	],
+  "spotify_gogole_searcher": {
+    "seid": "",
+    "apikey": ""
+  },
+  "spotify_searcher": {
+    "token": ""
+  }
 }
