@@ -76,9 +76,9 @@ class StationTool(Tool):
 
             searcher = SpotifySearcher(self.config.get('spotify_searcher'))
 
-            cnt = 1
+            cnt = 0
             for track in tracks:
-
+                c += 1
                 uri = track.get_extra('sp.uri', raise_error=False)
                 if uri is not None and 'spotify:' in uri:
                     continue
@@ -132,5 +132,4 @@ class StationTool(Tool):
 
                     sess.commit()
                     #print(track.extras)
-
-                cnt += 1
+                    
