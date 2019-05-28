@@ -1,4 +1,5 @@
 from tools import Tool
+from tools.track import TrackTool
 from tools.utils.searchers import SpotifySearcher
 
 from common.models import Station, Track, Play
@@ -15,6 +16,24 @@ class StationTool(Tool):
 
             for station in stations:
                 print('- [id={}] {}'.format(station.id, station.name))
+
+    def search_title(self, station_name, query):
+        with self.db.session_scope() as sess:
+            station = sess.query(Station).filter_by(name=station_name).first()
+
+            if station is None:
+                print('Search failed, station "{}" not found.'.format(station_name))
+                return False
+
+            tracks = sess.query(Track)\
+                .filter_by(station=station)\
+                .filter_by(is_default=False)\
+                .filter(Track.title.like(f'%{query}%'))\
+                .all()
+
+            for track in tracks:
+                print(f'[ID={track.id}] "{track.title}" by "{track.artist}"')
+        
 
     def clear_spotify(self, station_name, track_ids=None):
         with self.db.session_scope() as sess:
@@ -36,22 +55,12 @@ class StationTool(Tool):
 
             print('Clearing Spotify metadata for {} tracks in station {}...'.format(len(tracks), station.name))
 
+            tool = TrackTool(self.config, self.db)
             for track in tracks:
-
-                orig = track.get_extra('.', raise_error=False)
-
-                if orig is not None:
-                    if 'sp' in orig:
-                        del orig['sp']
-
-                    if 'spuri' in orig:
-                        del orig['spuri']
-
-                    track.set_extra('.', orig)
-
-                    sess.add(track)
-                    sess.commit()
+                tool._clear_spotify(track)
+                sess.commit()
                 #print(track.extras)
+
             print('Success!')
 
     def gen_spotify(self, station_name):

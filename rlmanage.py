@@ -11,7 +11,7 @@ def _e(msg, *args, **kwargs):
     return _('ERROR: {}'.format(msg), *args, **kwargs)
 
 _VERSION = '1.0'
-_TOOLS = ['station']
+_TOOLS = ['station', 'track']
 
 def print_help():
     # Display USAGE
