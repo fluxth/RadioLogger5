@@ -106,6 +106,7 @@ class StationTool(Tool):
             tracks = sess.query(Track)\
                 .filter_by(station=station)\
                 .filter_by(is_default=False)\
+                .order_by(desc(Track.id))\
                 .all()
                 #.limit(10)\
 
@@ -128,9 +129,10 @@ class StationTool(Tool):
                         track.artist
                     ) + colorama.Style.RESET_ALL)
                 else:
-                    print('\n\n{c}[{}/{}] Processing {r}{m}"{}"{r}{c} by {r}{m}"{}"{r}{c}...{r}'.format(
+                    print('\n\n{c}[{}/{}] Processing [{}] {r}{m}"{}"{r}{c} by {r}{m}"{}"{r}{c}...{r}'.format(
                         cnt,
                         total_tracks,
+                        track.id,
                         track.title,
                         track.artist,
                         m=colorama.Fore.MAGENTA,
