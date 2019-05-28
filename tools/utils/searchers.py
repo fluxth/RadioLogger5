@@ -88,6 +88,18 @@ class SpotifySearcher():
         # Output: otitle, oartist, oalbum
         return track['name'], ', '.join(a['name'] for a in track['artists']), track['album']['name']
 
+    def format_track(self, title, artist, album):
+        return f'{colorama.Fore.MAGENTA}"{title}"{colorama.Style.RESET_ALL} ' + \
+        f'by {colorama.Fore.MAGENTA}"{artist}"{colorama.Style.RESET_ALL} in album "{album}"'
+
+    def print_match(self, title, artist, album, level=None):
+        out = f'{colorama.Fore.GREEN}Matched{colorama.Style.RESET_ALL} ' + self.format_track(title, artist, album)
+
+        if level is not None:
+            out += f' {colorama.Fore.YELLOW}[L{level}]{colorama.Style.RESET_ALL}'
+
+        print(out)
+
     def link(self, uri):
         track_id = uri.replace('spotify:track:', '')
 
@@ -105,7 +117,7 @@ class SpotifySearcher():
             return False
 
         otitle, oartist, oalbum = self.parse_metadata(r)
-        print(colorama.Fore.GREEN + 'Matched "{}" by "{}" in album "{}"'.format(otitle, oartist, oalbum) + colorama.Style.RESET_ALL)
+        self.print_match(otitle, oartist, oalbum)
 
         return {
             'uri': r['uri'],
@@ -134,13 +146,14 @@ class SpotifySearcher():
                         #print('skip')
                         continue
 
-                    print(colorama.Fore.GREEN + 'Matched "{}" by "{}" in album "{}" [L{}]'.format(otitle, oartist, oalbum, level)  + colorama.Style.RESET_ALL)
+                    self.print_match(otitle, oartist, oalbum, level)
+                    #print(colorama.Fore.GREEN + 'Matched "{}" by "{}" in album "{}" [L{}]'.format(otitle, oartist, oalbum, level)  + colorama.Style.RESET_ALL)
 
                     if level >= 6:
                         choice = input(colorama.Fore.YELLOW + '[LOW CONFIDENCE] Do you want to continue with this match? [y/N/C] > ' + colorama.Style.RESET_ALL).lower()
                         if choice == 'c':
                             return False
-                        elif not choice == 'y':
+                        elif not (choice == 'y' or choice == '1'):
                             print()
                             continue
 
@@ -160,19 +173,19 @@ class SpotifySearcher():
 
                 for k, r in enumerate(data['tracks']['items']):
                     otitle, oartist, oalbum = self.parse_metadata(r)
-                    print('[{}] "{}" by "{}" in album "{}"'.format(k+1, otitle, oartist, oalbum))
+                    print('[{}] {}'.format(k+1, self.format_track(otitle, oartist, oalbum)))
 
                 while True:
                     choice = input(colorama.Fore.YELLOW + 'Selection [{}-{}/C] > '.format(1, len(data['tracks']['items'])) + colorama.Style.RESET_ALL)
 
-                    if choice.lower() == 'c':
+                    if choice.lower() == 'c' or choice == '0':
                         return False
 
                     elif choice.isdigit() and int(choice) > 0 and int(choice) <= len(data['tracks']['items']):
                         r = data['tracks']['items'][int(choice)-1]
                         otitle, oartist, oalbum = self.parse_metadata(r)
            
-                        print(colorama.Fore.GREEN + 'Matched "{}" by "{}" in album "{}"'.format(otitle, oartist, oalbum)  + colorama.Style.RESET_ALL)
+                        self.print_match(otitle, oartist, oalbum, level)
                         return {
                             'uri': r['uri'],
                             't': otitle,

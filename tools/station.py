@@ -36,6 +36,7 @@ class StationTool(Tool):
             print('Clearing Spotify metadata for {} tracks in station {}...'.format(len(tracks), station.name))
 
             for track in tracks:
+
                 orig = track.get_extra('.', raise_error=False)
 
                 if orig is not None:
@@ -51,6 +52,9 @@ class StationTool(Tool):
                     sess.commit()
                 #print(track.extras)
             print('Success!')
+
+    def gen_spotify(self, station_name):
+        pass
 
     def link_spotify(self, station_name):
         with self.db.session_scope() as sess:
@@ -85,19 +89,22 @@ class StationTool(Tool):
                         track.artist
                     ) + colorama.Style.RESET_ALL)
                 else:
-                    print(colorama.Fore.CYAN + '\n\n[{}/{}] Processing "{}" by "{}"...'.format(
+                    print('\n\n{c}[{}/{}] Processing {r}{m}"{}"{r}{c} by {r}{m}"{}"{r}{c}...{r}'.format(
                         cnt,
                         total_tracks,
                         track.title,
-                        track.artist
-                    ) + colorama.Style.RESET_ALL)
+                        track.artist,
+                        m=colorama.Fore.MAGENTA,
+                        c=colorama.Fore.CYAN,
+                        r=colorama.Style.RESET_ALL,
+                    ))
 
                     result = searcher.search(track.title, track.artist)
 
                     if result is False:
                         choice = input(colorama.Fore.RED + 'Track not found, manually insert URI? [y/N] > ' + colorama.Style.RESET_ALL).lower()
 
-                        if choice == 'y':
+                        if choice == 'y' or choice == '1':
                             while True:
                                 uri = input('Spotify URI > ')
 
@@ -124,6 +131,6 @@ class StationTool(Tool):
                     sess.add(track)
 
                     sess.commit()
-                    print(track.extras)
+                    #print(track.extras)
 
                 cnt += 1

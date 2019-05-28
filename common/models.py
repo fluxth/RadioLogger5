@@ -79,8 +79,13 @@ class Track(Base):
                 raise KeyError(key)
 
             orig = msgpack.unpackb(self.extras, encoding='utf-8')
+
+            if orig is None:
+                raise KeyError(key)
+
             if key == '.':
                 return orig
+
             return resolve_dict(orig, key)
         except KeyError:
             if not raise_error:
