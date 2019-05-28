@@ -18,68 +18,110 @@ class SpotifySearcher():
         # High Confidence
 
         if level == 0:
-            return '{} {}'.format(title, artist)
+            return (title, artist)
 
         elif level == 1:
             if '(' not in title:
                 return None
 
             title = title.split('(')[0].strip()
-            return '{} {}'.format(title, artist)
+            return (title, artist)
 
         elif level == 2:
+            if '[' not in title:
+                return None
+
+            title = title.split('[')[0].strip()
+            return (title, artist)
+
+        elif level == 3:
             if 'ft.' not in title.lower():
                 return None
 
             title = title.lower().split('ft.')[0].strip()
-            return '{} {}'.format(title, artist)
+            return (title, artist)
 
-        elif level == 3:
+        elif level == 4:
             if 'feat.' not in title.lower():
                 return None
 
             title = title.lower().split('feat.')[0].strip()
-            return '{} {}'.format(title, artist)
+            return (title, artist)
 
         # Medium Confidence
 
-        elif level == 4:
+        elif level == 5:
+            if re.search(r'( [1-2]\d\d\d)$', title.lower().strip()) is None:
+                return None
+
+            title = re.sub(r'( [1-2]\d\d\d)$', '', title.lower().strip())
+            return (title, artist)
+
+        elif level == 6:
             if '(' not in artist:
                 return None
 
             artist = artist.split('(')[0].strip()
-            return '{} {}'.format(title, artist)
+            return (title, artist)
 
-        elif level == 5:
+        elif level == 7:
+            if '[' not in artist:
+                return None
+
+            artist = artist.split('[')[0].strip()
+            return (title, artist)
+
+        elif level == 8:
             if '(' not in title or '(' not in artist:
                 return None
 
             title = title.split('(')[0].strip()
             artist = artist.split('(')[0].strip()
-            return '{} {}'.format(title, artist)
+            return (title, artist)
+
+        elif level == 9:
+            if '[' not in title or '[' not in artist:
+                return None
+
+            title = title.split('[')[0].strip()
+            artist = artist.split('[')[0].strip()
+            return (title, artist)
 
         # Low Confidence
 
-        elif level == 6:
-            return title
+        elif level == 10:
+            return (title, '')
 
-        elif level == 7:
+        elif level == 11:
             if '(' not in title:
                     return None
 
-            return title.split('(')[0].strip()
+            return (title.split('(')[0].strip(), '')
 
-        elif level == 8:
+        elif level == 12:
+            if '[' not in title:
+                    return None
+
+            return (title.split('[')[0].strip(), '')
+
+        elif level == 13:
             if 'ft.' not in title.lower():
                 return None
 
-            return title.lower().split('ft.')[0].strip()
+            return (title.lower().split('ft.')[0].strip(), '')
 
-        elif level == 9:
+        elif level == 14:
             if 'feat.' not in title.lower():
                 return None
 
-            return title.lower().split('feat.')[0].strip()
+            return (title.lower().split('feat.')[0].strip(), '')
+
+        elif level == 15:
+            if re.search(r'( [1-2]\d\d\d)$', title.lower().strip()) is None:
+                return None
+
+            title = re.sub(r'( [1-2]\d\d\d)$', '', title.lower().strip())
+            return (title, '')
 
         else:
             return False
@@ -127,7 +169,7 @@ class SpotifySearcher():
 
     def search(self, title, artist, types=['track']):
         level = 0
-        while level <= 9:
+        while level <= 15:
             q = self.build_query(title, artist, level)
 
             if q is None:
@@ -136,20 +178,20 @@ class SpotifySearcher():
 
             #print('> lv', level, q)
 
-            data = self.request(q, types)
+            data = self.request(' '.join(q), types)
 
             if data['tracks']['total'] > 0:
                 for r in data['tracks']['items']:
                     otitle, oartist, oalbum = self.parse_metadata(r)
 
-                    if not self.validate_match(title, artist, otitle, oartist):
+                    if not self.validate_match(q[0], q[1], otitle, oartist):
                         #print('skip')
                         continue
 
                     self.print_match(otitle, oartist, oalbum, level)
                     #print(colorama.Fore.GREEN + 'Matched "{}" by "{}" in album "{}" [L{}]'.format(otitle, oartist, oalbum, level)  + colorama.Style.RESET_ALL)
 
-                    if level >= 6:
+                    if level >= 10:
                         choice = input(colorama.Fore.YELLOW + '[LOW CONFIDENCE] Do you want to continue with this match? [y/N/C] > ' + colorama.Style.RESET_ALL).lower()
                         if choice == 'c' or choice == '0':
                             return False
@@ -201,13 +243,36 @@ class SpotifySearcher():
                 return False
 
     def sanitize_string(self, in_str):
-        return re.sub(r'[^\w ]+', '', in_str).replace('ๆ', '')
+        return re.sub(r'[^\w ]+', ' ', in_str).replace('ๆ', '').replace('_', ' ')
+
+    def extract_string(self, in_str):
+        in_list = in_str.split(' ')
+        out_list = []
+        for e in in_list:
+            if not e == '':
+                out_list.append(e.lower())
+
+        return out_list
 
     def validate_match(self, in_title, in_artist, out_title, out_artist):
-        if all(w in self.sanitize_string(in_title).split(' ') for w in self.sanitize_string(out_title).split(' ')):
-            return True
+        inpt_list = self.extract_string(self.sanitize_string(in_title))
+        outt_list = self.extract_string(self.sanitize_string(out_title))
 
-        return False
+        if not all(w in outt_list for w in inpt_list):
+            #print('false', inpt_list, outt_list)
+            return False
+
+        if all(ord(c) < 128 for c in in_title) and all(ord(c) < 128 for c in in_artist):
+            # Is english, check artist too.
+            inpa_list = self.extract_string(self.sanitize_string(in_artist))
+            outa_list = self.extract_string(self.sanitize_string(out_artist))
+
+            #print(inpa_list, outa_list)
+            if not all(w in outa_list for w in inpa_list):
+                return False
+
+
+        return True
 
     def request(self, query, types):
         if all(t in types for t in self.VALID_TYPES):
