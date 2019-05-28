@@ -151,7 +151,7 @@ class SpotifySearcher():
 
                     if level >= 6:
                         choice = input(colorama.Fore.YELLOW + '[LOW CONFIDENCE] Do you want to continue with this match? [y/N/C] > ' + colorama.Style.RESET_ALL).lower()
-                        if choice == 'c':
+                        if choice == 'c' or choice == '0':
                             return False
                         elif not (choice == 'y' or choice == '1'):
                             print()
