@@ -78,7 +78,7 @@ class StationTool(Tool):
 
             cnt = 0
             for track in tracks:
-                c += 1
+                cnt += 1
                 uri = track.get_extra('sp.uri', raise_error=False)
                 if uri is not None and 'spotify:' in uri:
                     continue
