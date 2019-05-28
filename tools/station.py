@@ -5,7 +5,9 @@ from tools.utils.searchers import SpotifySearcher
 from common.models import Station, Track, Play
 from sqlalchemy import func, desc
 
+import requests
 import colorama
+import math
 
 class StationTool(Tool):
     
@@ -79,21 +81,57 @@ class StationTool(Tool):
                 .order_by(desc('spins'))
             tracks = q.all()
 
-            print(f'Generating Spotify playlist for {len(tracks)} tracks...\n')
+            print(f'Generating Spotify playlist for {len(tracks)} tracks...')
 
             out = []
             skipped = 0
+            dupes = 0
             for track in tracks:
                 uri = track[0].get_extra('sp.uri', raise_error=False)
 
                 if uri is not None:
-                    out.append(uri)
+                    if uri in out:
+                        dupes += 1
+                    else:
+                        out.append(uri)
                 else:
                     skipped += 1
 
-            print(','.join(out))
+            print(f'Processed {len(tracks)} total tracks, {skipped} skipped, {dupes} duplicates.\n')
+            if not input('Inject to Spotify? [y/N] > ').lower() == 'y':
+                print('\n' + ','.join(out))
+                return True
+            else:
+                playlist_id = input('\nPLAYLIST ID > ')
+                token = input('TOKEN > ')
+                print()
 
-            print(f'\n{skipped} skipped of {len(tracks)} total tracks.')
+                URL = 'https://api.spotify.com/v1/playlists/{}/tracks?uris={}'
+
+                loops = math.ceil(len(out) / 100)
+
+                c = 0
+                while c < loops:
+                    payload = out[(c*100):(c*100)+100]
+
+                    resp = requests.post(
+                        URL.format(playlist_id, ','.join(payload)),
+                        headers = {
+                            'Authorization': f'Bearer {token}'
+                        }
+                    )
+
+                    data = resp.json()
+
+                    if 'error' in data:
+                        print('Spotify API Error {}: {}'.format(data['error']['status'], data['error']['message']))
+                        return False
+
+                    if 'snapshot_id' in data:
+                        print(f'{len(payload)} tracks added, snapshot "{data["snapshot_id"]}"')
+
+                    c += 1
+
 
     def link_spotify(self, station_name):
         with self.db.session_scope() as sess:
