@@ -15,6 +15,43 @@ class StationTool(Tool):
             for station in stations:
                 print('- [id={}] {}'.format(station.id, station.name))
 
+    def clear_spotify(self, station_name, track_ids=None):
+        with self.db.session_scope() as sess:
+            station = sess.query(Station).filter_by(name=station_name).first()
+
+            if station is None:
+                print('Clearing failed, station "{}" not found.'.format(station_name))
+                return False
+
+            print('Warning: This will erase ALL spotify metadata from this station!')
+            if not input('If you wish to continue, please type station name ({}) to confirm > '.format(station.name)).lower() == station.name.lower():
+                print('Clearing aborted.')
+                return False
+
+            tracks = sess.query(Track)\
+                .filter_by(station=station)\
+                .filter_by(is_default=False)\
+                .all()
+
+            print('Clearing Spotify metadata for {} tracks in station {}...'.format(len(tracks), station.name))
+
+            for track in tracks:
+                orig = track.get_extra('.', raise_error=False)
+
+                if orig is not None:
+                    if 'sp' in orig:
+                        del orig['sp']
+
+                    if 'spuri' in orig:
+                        del orig['spuri']
+
+                    track.set_extra('.', orig)
+
+                    sess.add(track)
+                    sess.commit()
+                #print(track.extras)
+            print('Success!')
+
     def link_spotify(self, station_name):
         with self.db.session_scope() as sess:
             station = sess.query(Station).filter_by(name=station_name).first()
@@ -38,8 +75,9 @@ class StationTool(Tool):
             cnt = 1
             for track in tracks:
 
-                uri = track.get_extra('spuri', raise_error=False)
+                uri = track.get_extra('sp.uri', raise_error=False)
                 if uri is not None and 'spotify:' in uri:
+                    continue
                     print(colorama.Fore.YELLOW + '\n\n[{}/{}] Skipping "{}" by "{}", Spotify URI already detected.'.format(
                         cnt,
                         total_tracks,
@@ -64,7 +102,11 @@ class StationTool(Tool):
                                 uri = input('Spotify URI > ')
 
                                 if 'spotify:track:' in uri:
-                                    result = uri
+                                    result = searcher.link(uri)
+
+                                    if result is False:
+                                        continue
+
                                     break
 
                                 elif uri == 'c':
@@ -78,9 +120,10 @@ class StationTool(Tool):
                             print(colorama.Fore.RED + 'Spotify not linked for this track.' + colorama.Style.RESET_ALL)
                             continue
                             
-                    track.set_extra('spuri', result)
+                    track.set_extra('sp', result)
                     sess.add(track)
 
                     sess.commit()
+                    print(track.extras)
 
                 cnt += 1

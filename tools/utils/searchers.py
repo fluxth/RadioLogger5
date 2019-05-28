@@ -88,6 +88,31 @@ class SpotifySearcher():
         # Output: otitle, oartist, oalbum
         return track['name'], ', '.join(a['name'] for a in track['artists']), track['album']['name']
 
+    def link(self, uri):
+        track_id = uri.replace('spotify:track:', '')
+
+        resp = requests.get(
+            'https://api.spotify.com/v1/tracks/{}'.format(track_id),
+            headers = {
+                'Authorization': 'Bearer {}'.format(self.TOKEN)
+            }
+        )
+
+        r = resp.json()
+
+        if not resp.status_code == 200:
+            print(colorama.Fore.RED + 'Spotify URI Error {}: {}'.format(r['error']['status'], r['error']['message']) + colorama.Style.RESET_ALL)
+            return False
+
+        otitle, oartist, oalbum = self.parse_metadata(r)
+        print(colorama.Fore.GREEN + 'Matched "{}" by "{}" in album "{}"'.format(otitle, oartist, oalbum) + colorama.Style.RESET_ALL)
+
+        return {
+            'uri': r['uri'],
+            't': otitle,
+            'a': oartist,
+        }
+
     def search(self, title, artist, types=['track']):
         level = 0
         while level <= 9:
@@ -119,7 +144,11 @@ class SpotifySearcher():
                             print()
                             continue
 
-                    return r['uri']
+                    return {
+                        'uri': r['uri'],
+                        't': otitle,
+                        'a': oartist,
+                    }
                 else:
                     level += 1
             else:
@@ -144,7 +173,11 @@ class SpotifySearcher():
                         otitle, oartist, oalbum = self.parse_metadata(r)
            
                         print(colorama.Fore.GREEN + 'Matched "{}" by "{}" in album "{}"'.format(otitle, oartist, oalbum)  + colorama.Style.RESET_ALL)
-                        return r['uri']
+                        return {
+                            'uri': r['uri'],
+                            't': otitle,
+                            'a': oartist,
+                        }
                 
                     else:
                         print('Selection out of bound, check your selection or type C to cancel.')

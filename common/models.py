@@ -4,13 +4,13 @@ from sqlalchemy.types import TypeDecorator, Integer as INTEGER
 
 from sqlalchemy.orm import relationship
 from sqlalchemy import (
-	Column, 
-	Integer, 
-	String, 
-	Text,
-	LargeBinary, 
-	Boolean, 
-	ForeignKey
+    Column, 
+    Integer, 
+    String, 
+    Text,
+    LargeBinary, 
+    Boolean, 
+    ForeignKey
 )
 
 from datetime import datetime, timezone
@@ -35,98 +35,102 @@ class PaddedTimestamp(TypeDecorator):
         return datetime.utcfromtimestamp(value + self._PAD)
 
 class Station(Base):
-	__tablename__ = 'stations'
+    __tablename__ = 'stations'
 
-	id = Column(Integer, primary_key=True)
-	name = Column(String, unique=True, nullable=False)
-	tracks = relationship('Track', back_populates='station')
-	error_logs = relationship('ErrorLog', back_populates='station')
-	ts = Column(PaddedTimestamp, default=datetime.utcnow())
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+    tracks = relationship('Track', back_populates='station')
+    error_logs = relationship('ErrorLog', back_populates='station')
+    ts = Column(PaddedTimestamp, default=datetime.utcnow())
 
-	def __str__(self):
-		return '<Station {}>'.format(self.name)
+    def __str__(self):
+        return '<Station {}>'.format(self.name)
 
 class ErrorLog(Base):
-	__tablename__ = 'error_logs'
+    __tablename__ = 'error_logs'
 
-	id = Column(Integer, primary_key=True)
-	station_id = Column(Integer, ForeignKey('stations.id'))
-	station = relationship('Station', back_populates='error_logs')
-	owner = Column(String, nullable=False)
-	message = Column(String, nullable=False)
-	details = Column(Text)
-	ts = Column(PaddedTimestamp, default=datetime.utcnow())
+    id = Column(Integer, primary_key=True)
+    station_id = Column(Integer, ForeignKey('stations.id'))
+    station = relationship('Station', back_populates='error_logs')
+    owner = Column(String, nullable=False)
+    message = Column(String, nullable=False)
+    details = Column(Text)
+    ts = Column(PaddedTimestamp, default=datetime.utcnow())
 
-	def __str__(self):
-		return '<ErrorLog station={} owner={} msg={}>'.format(self.station, self.owner, self.message)
+    def __str__(self):
+        return '<ErrorLog station={} owner={} msg={}>'.format(self.station, self.owner, self.message)
 
 class Track(Base):
-	__tablename__ = 'tracks'
+    __tablename__ = 'tracks'
 
-	id = Column(Integer, primary_key=True)
-	title = Column(String)
-	artist = Column(String)
-	extras = Column(LargeBinary)
-	is_default = Column(Boolean, default=False)
-	station_id = Column(Integer, ForeignKey('stations.id'), nullable=False)
-	station = relationship('Station', back_populates='tracks')
-	plays = relationship('Play', back_populates='track')
-	ts = Column(PaddedTimestamp, default=datetime.utcnow())
+    id = Column(Integer, primary_key=True)
+    title = Column(String)
+    artist = Column(String)
+    extras = Column(LargeBinary)
+    is_default = Column(Boolean, default=False)
+    station_id = Column(Integer, ForeignKey('stations.id'), nullable=False)
+    station = relationship('Station', back_populates='tracks')
+    plays = relationship('Play', back_populates='track')
+    ts = Column(PaddedTimestamp, default=datetime.utcnow())
 
-	def get_extra(self, key, raise_error=True):
-		try:
-			if self.extras is None:
-				raise KeyError(key)
+    def get_extra(self, key, raise_error=True):
+        try:
+            if self.extras is None:
+                raise KeyError(key)
 
-			orig = msgpack.unpackb(self.extras, encoding='utf-8')
-			#print(orig)
-			return resolve_dict(orig, key)
-		except KeyError:
-			if not raise_error:
-				return None
-			raise
+            orig = msgpack.unpackb(self.extras, encoding='utf-8')
+            if key == '.':
+                return orig
+            return resolve_dict(orig, key)
+        except KeyError:
+            if not raise_error:
+                return None
+            raise
 
-	def set_extra(self, key, value):
-		orig = {}
-		if self.extras is not None:
-			orig = msgpack.unpackb(self.extras, encoding='utf-8')
+    def set_extra(self, key, value):
+        orig = {}
+        if self.extras is not None:
+            orig = msgpack.unpackb(self.extras, encoding='utf-8')
 
-		def put(d, keys, item):
-			if "." in keys:
-				key, rest = keys.split(".", 1)
-				if key not in d:
-					d[key] = {}
-				put(d[key], rest, item)
-			else:
-				d[keys] = item
+        if key == '.':
+            orig = value
+        else:
+            def put(d, keys, item):
+                if "." in keys:
+                    key, rest = keys.split(".", 1)
+                    if key not in d:
+                        d[key] = {}
+                    put(d[key], rest, item)
+                else:
+                    d[keys] = item
 
-		put(orig, key, value)
+            put(orig, key, value)
 
-		self.extras = msgpack.packb(orig, use_bin_type=True)
-			
-	def merge_extra(self, in_dict):
-		pass
+        self.extras = msgpack.packb(orig, use_bin_type=True)
+            
+    def merge_extra(self, in_dict):
+        pass
 
-	def __str__(self):
-		return '<Track title="{}" artist="{}" station={}>'.format(
-			self.title,
-			self.artist,
-			self.station
-		)
+    def __str__(self):
+        return '<Track title="{}" artist="{}" station={}>'.format(
+            self.title,
+            self.artist,
+            self.station
+        )
 
 class Play(Base):
-	__tablename__ = 'plays'
+    __tablename__ = 'plays'
 
-	id = Column(Integer, primary_key=True)
-	track_id = Column(Integer, ForeignKey('tracks.id'), nullable=False)
-	track = relationship('Track', back_populates='plays')
-	extras = Column(LargeBinary)
-	ts = Column(PaddedTimestamp, default=datetime.utcnow())
+    id = Column(Integer, primary_key=True)
+    track_id = Column(Integer, ForeignKey('tracks.id'), nullable=False)
+    track = relationship('Track', back_populates='plays')
+    extras = Column(LargeBinary)
+    ts = Column(PaddedTimestamp, default=datetime.utcnow())
 
-	def __str__(self):
-		return '<Play track={}>'.format(
-			self.track
-		)
+    def __str__(self):
+        return '<Play track={}>'.format(
+            self.track
+        )
 
 class User(Base):
     __tablename__ = 'users'
