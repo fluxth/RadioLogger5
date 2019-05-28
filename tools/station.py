@@ -1,7 +1,8 @@
 from tools import Tool
 from tools.utils.searchers import SpotifySearcher
 
-from common.models import Station, Track
+from common.models import Station, Track, Play
+from sqlalchemy import func, desc
 
 import colorama
 
@@ -54,7 +55,36 @@ class StationTool(Tool):
             print('Success!')
 
     def gen_spotify(self, station_name):
-        pass
+        with self.db.session_scope() as sess:
+            station = sess.query(Station).filter_by(name=station_name).first()
+
+            if station is None:
+                print('Playlist generation failed, station "{}" not found.'.format(station_name))
+                return False
+
+            q = sess.query(Track, func.count(Track.plays).label('spins'))\
+                .join(Play)\
+                .filter(Play.track.has(Track.station_id == station.id))\
+                .filter(Play.track.has(Track.is_default == False))\
+                .group_by(Track)\
+                .order_by(desc('spins'))
+            tracks = q.all()
+
+            print(f'Generating Spotify playlist for {len(tracks)} tracks...\n')
+
+            out = []
+            skipped = 0
+            for track in tracks:
+                uri = track[0].get_extra('sp.uri', raise_error=False)
+
+                if uri is not None:
+                    out.append(uri)
+                else:
+                    skipped += 1
+
+            print(','.join(out))
+
+            print(f'\n{skipped} skipped of {len(tracks)} total tracks.')
 
     def link_spotify(self, station_name):
         with self.db.session_scope() as sess:
