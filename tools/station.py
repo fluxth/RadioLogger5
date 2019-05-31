@@ -133,7 +133,7 @@ class StationTool(Tool):
                     c += 1
 
 
-    def link_spotify(self, station_name):
+    def link_spotify(self, station_name, order='plays'):
         with self.db.session_scope() as sess:
             station = sess.query(Station).filter_by(name=station_name).first()
 
@@ -141,12 +141,31 @@ class StationTool(Tool):
                 print('Linking failed, station "{}" not found.'.format(station_name))
                 return False
 
-            tracks = sess.query(Track)\
-                .filter_by(station=station)\
-                .filter_by(is_default=False)\
-                .order_by(desc(Track.id))\
-                .all()
-                #.limit(10)\
+            if order == 'start':
+                tracks = sess.query(Track)\
+                    .filter_by(station=station)\
+                    .filter_by(is_default=False)\
+                    .order_by(Track.id)\
+                    .all()
+            elif order == 'end':
+                tracks = sess.query(Track)\
+                    .filter_by(station=station)\
+                    .filter_by(is_default=False)\
+                    .order_by(desc(Track.id))\
+                    .all()
+            elif order == 'plays':
+                tracks = sess.query(Track, func.count(Track.plays).label('spins'))\
+                    .join(Play)\
+                    .filter(Play.track.has(Track.station_id == station.id))\
+                    .filter(Play.track.has(Track.is_default == False))\
+                    .group_by(Track)\
+                    .order_by(desc('spins'))\
+                    .all()
+
+                tracks = [tr[0] for tr in tracks]
+            else:
+                print(f'Unknown order: {order}')
+                return False
 
             total_tracks = len(tracks)
 
