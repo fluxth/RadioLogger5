@@ -8,10 +8,11 @@ def _(*args, **kwargs):
     return print(*args, **kwargs)
 
 def _e(msg, *args, **kwargs):
-    return _('ERROR: {}'.format(msg), *args, **kwargs)
+    return _(f'ERROR: {msg}', *args, **kwargs)
 
 _VERSION = '1.0'
-_TOOLS = ['station', 'track']
+_TOOLS = ['station', 'track', 'config']
+_TOOL_SWAP_ARGS = ['station', 'config']
 
 def print_help():
     # Display USAGE
@@ -19,7 +20,7 @@ def print_help():
     _('For list of tools, use "rlmanage.py list".')
 
 if __name__ == '__main__':
-    _('RLManage v{} for Radio Logger 5\n'.format(_VERSION))
+    _(f'RLManage v{_VERSION} for Radio Logger 5\n')
 
     try:
         config = Config('./config.json')
@@ -40,7 +41,7 @@ if __name__ == '__main__':
                 if len(_TOOLS) > 0:
                     _('List of avaliable tools:')
                     for tool in _TOOLS:
-                        _('- {}'.format(tool))
+                        _(f'- {tool}')
                 else:
                     _('No tools avaliable.')
 
@@ -50,29 +51,37 @@ if __name__ == '__main__':
                 tool = options[0]
 
                 try:
-                    t_module = import_module('tools.{}'.format(tool))
-                    t_class = getattr(t_module, '{}Tool'.format(tool.title()))
+                    t_module = import_module(f'tools.{tool}')
+                    t_class = getattr(t_module, f'{tool.title()}Tool')
 
                     t_object = t_class(config, db)
 
                 except (ModuleNotFoundError, AttributeError):
-                    _e('Tool error: {}.{} <- {}'.format(tool, method, pass_args))
+                    _e(f'Tool error: {tool}.{method} <- {pass_args}')
                     break
 
-                method = options[1].replace('-', '_') if len(options) > 1 else '_default'
-                run = getattr(t_object, method)
+                if tool in _TOOL_SWAP_ARGS and len(options) >= 3:
+                    # tool arg2 arg1 arg3 ...
+                    method = options[2]
+                    pass_args = [options[1]] + ([] if len(options) < 3 else options[3:])
+                else:
+                    # tool arg1 arg2 arg3 ...
+                    method = options[1] if len(options) > 1 else '_default'
+                    pass_args = [] if len(options) < 3 else options[2:]
 
-                pass_args = [] if len(options) < 3 else options[2:]
+                method = method.replace('-', '_')
+
+                run = getattr(t_object, method)
 
                 try:
                     run(*pass_args)
                 except TypeError:
-                    _e('Invalid tool usage: {}.{} <- {}'.format(tool, method, pass_args))
+                    _e(f'Invalid tool usage: {tool}.{method} <- {pass_args}')
                     raise
                     break
 
             else:
-                _e('Tool not found: "{}"\n'.format(options[0]))
+                _e(f'Tool not found: "{options[0]}"\n')
                 print_help()
 
                 break
