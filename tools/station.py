@@ -133,7 +133,7 @@ class StationTool(Tool):
                     c += 1
 
 
-    def link_spotify(self, station_name, order='plays'):
+    def link_spotify(self, station_name, order='plays', skip=0):
         with self.db.session_scope() as sess:
             station = sess.query(Station).filter_by(name=station_name).first()
 
@@ -173,7 +173,13 @@ class StationTool(Tool):
 
             searcher = SpotifySearcher(self.config.get('spotify_searcher'))
 
-            cnt = 0
+            skip = int(skip)
+            if skip > 0 and skip < len(tracks):
+                cnt = skip
+                print(f'Skipping first {skip} tracks...')
+            else:
+                cnt = 0
+
             for track in tracks:
                 cnt += 1
                 uri = track.get_extra('sp.uri', raise_error=False)
