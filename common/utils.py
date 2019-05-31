@@ -69,7 +69,7 @@ class Config(object):
 
     def save(self):
         with copen(self._path, 'w', 'utf-8') as f:
-            json.dump(self._config, f)
+            json.dump(self._config, f, indent=4, sort_keys=True)
 
     def load(self):
         with copen(self._path, 'r', 'utf-8') as f:
@@ -82,5 +82,15 @@ class Config(object):
         return resolve_dict(self._config, key)
 
     def set(self, key, value):
-        raise NotImplementedError('config.set is currently not avaliable')
+        def put(d, keys, item):
+                if "." in keys:
+                    key, rest = keys.split(".", 1)
+                    if key not in d:
+                        d[key] = {}
+                    put(d[key], rest, item)
+                else:
+                    d[keys] = item
+
+        put(self._config, key, value)
+
         self.save()
