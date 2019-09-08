@@ -3,8 +3,9 @@ from tools.track import TrackTool
 from tools.utils.searchers import SpotifySearcher
 
 from common.models import Station, Track, Play
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, and_
 
+from datetime import datetime, timedelta
 import requests
 import colorama
 import math
@@ -65,7 +66,7 @@ class StationTool(Tool):
 
             print('Success!')
 
-    def gen_spotify(self, station_name):
+    def gen_spotify(self, station_name, spins_limit='all'):
         with self.db.session_scope() as sess:
             station = sess.query(Station).filter_by(name=station_name).first()
 
@@ -73,13 +74,68 @@ class StationTool(Tool):
                 print('Playlist generation failed, station "{}" not found.'.format(station_name))
                 return False
 
-            q = sess.query(Track, func.count(Track.plays).label('spins'))\
+            LIMIT_SCOPES = ('year', 'month', 'week', 'day', 'hour')
+
+            spins = func.count(Track.plays).label('spins')
+            q = sess.query(Track, spins)\
                 .join(Play)\
                 .filter(Play.track.has(Track.station_id == station.id))\
                 .filter(Play.track.has(Track.is_default == False))\
-                .group_by(Track)\
-                .order_by(desc('spins'))
-            tracks = q.all()
+
+            if not spins_limit == 'all':
+                if '=' in spins_limit:
+                    lim_parts = spins_limit.split('=')
+
+                    if not len(lim_parts) == 2:
+                        print('Playlist generation failed, spins_limit of "{}" cannot be parsed.'.format(spins_limit))
+                        return False
+
+                    if lim_parts[0] in LIMIT_SCOPES:
+                        limit_name = lim_parts[0]
+                        limit_value = lim_parts[1]
+
+                elif spins_limit in LIMIT_SCOPES:
+                    limit_name = spins_limit
+                    limit_value = '1'
+
+                else:
+                    print('Playlist generation failed, unknown spins_limit of "{}".'.format(spins_limit))
+                    return False
+                    
+                # Process limits
+                if limit_name == 'month' and '/' in limit_value:
+                    # "month=08/2019" selects only plays from that month
+                    month_parts = limit_value.split('/')
+
+                    print(month_parts)
+                    if (not len(month_parts) == 2) or (not len(month_parts[0]) == 2) or (not len(month_parts[1]) == 4):
+                        print('Playlist generation failed, cannot parse date of "{}".'.format(limit_value))
+                        return False
+
+                    dt_start = datetime(int(month_parts[1]), int(month_parts[0]), 1, 0, 0, 0)
+                    dt_end = datetime(int(month_parts[1]), int(month_parts[0]) + 1, 1, 0, 0, 0) - timedelta(seconds=1)
+
+                else:
+                    limit_value = int(limit_value)
+
+                    if limit_name == 'month':
+                        limit_name = 'day'
+                        limit_value *= 30
+
+                    elif limit_name == 'year':
+                        limit_name = 'day'
+                        limit_value *= 365
+
+                    dt_end = datetime.utcnow()
+                    dt_start = datetime.utcnow() - timedelta(**{
+                        f'{limit_name}s': limit_value
+                    })
+
+                q = q.filter(and_(Play.ts >= dt_start, Play.ts <= dt_end))
+                
+            tracks = q.group_by(Track)\
+                .order_by(spins.desc())\
+                .all()
 
             print(f'Generating Spotify playlist for {len(tracks)} tracks...')
 
