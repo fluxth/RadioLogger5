@@ -23,7 +23,7 @@ class Station(object):
 
     _session: Session = None
     _headers: dict = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
         'X-Requested-With': 'XMLHttpRequest',
     }
 
@@ -32,6 +32,11 @@ class Station(object):
 
     def initialize(self):
         self.initializeRequests()
+        if not self.initializeStation():
+            self._THREAD.exit = True
+
+    def initializeStation(self):
+        return True
 
     def initializeRequests(self):
         self._session = Session()
