@@ -107,13 +107,15 @@ class StationTool(Tool):
                     # "month=08/2019" selects only plays from that month
                     month_parts = limit_value.split('/')
 
-                    print(month_parts)
                     if (not len(month_parts) == 2) or (not len(month_parts[0]) == 2) or (not len(month_parts[1]) == 4):
                         print('Playlist generation failed, cannot parse date of "{}".'.format(limit_value))
                         return False
 
                     dt_start = datetime(int(month_parts[1]), int(month_parts[0]), 1, 0, 0, 0)
-                    dt_end = datetime(int(month_parts[1]), int(month_parts[0]) + 1, 1, 0, 0, 0) - timedelta(seconds=1)
+                    if (int(month_parts[0]) + 1) > 12:
+                        dt_end = datetime(int(month_parts[1]) + 1, 1, 1, 0, 0, 0) - timedelta(seconds=1)
+                    else:
+                        dt_end = datetime(int(month_parts[1]), int(month_parts[0]) + 1, 1, 0, 0, 0) - timedelta(seconds=1)
 
                 else:
                     limit_value = int(limit_value)
