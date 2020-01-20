@@ -120,8 +120,11 @@ class Station(object):
         if metadata is None:
             return None
 
-        if self.isDefaultMetadata(metadata) is True:
+        meta_check = self.isDefaultMetadata(metadata)
+        if meta_check is True:
             metadata.isDefault = True
+        elif meta_check is None:
+            return None
 
         return metadata
 

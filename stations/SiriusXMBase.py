@@ -18,6 +18,7 @@ class SiriusXMBase(Station):
     _SHORTNAME = 'SXM'
 
     _XMCH = ''
+    _CUTTYPE = 'Song'
 
     _URL = 'https://player.siriusxm.com/rest/v4/experience/modules/tune/now-playing-live?channelId={ch}&hls_output_mode=none&marker_mode=all_separate_cue_points&ccRequestType=AUDIO_VIDEO&result-template=web&time={XMTS}'
 
@@ -78,8 +79,7 @@ class SiriusXMBase(Station):
             raise StationParseError('Cut markers not found!')
 
         for m in cut_markers[::-1]:
-            if m['cut']['cutContentType'] == 'Song':
-                mts = int(m['time'])
+            if m['cut']['cutContentType'] == self._CUTTYPE:
                 title = m['cut']['title']
                 artists = ', '.join([o['name'] for o in m['cut']['artists']])
 
