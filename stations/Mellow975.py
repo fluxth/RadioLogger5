@@ -5,23 +5,20 @@ class Mellow975Station(Station):
     _NAME = 'Mellow975'
     _SHORTNAME = 'MLW'
 
-    _URL = 'https://mellow975.mcot.net/api/current-next-songs'
+    _URL = 'https://mellow975.mcot.net/fetch/currentSong'
 
     def parseResponse(self, payload):
         data = payload.json()
+        playlist = data['list']
 
-        if data['status'] != 'ok':
-            raise StationParseError('Endpoint returned unknown status', data['status'])
+        for item in playlist[::-1]:
+            if item['status'] == 'current':
+                return Metadata(
+                    title=str(item['song']).strip(), 
+                    artist=str(item['artist']).strip(),
+                )
 
-        current = data['data'][0]
-
-        return Metadata(
-            title=str(current['song']).strip(), 
-            artist=str(current['artist']).strip(),
-            extraData={
-            	'id': current['id']
-            }
-        )
+        return None
 
     def isDefaultMetadata(self, metadata):
         if len(metadata.title) == 0 and len(metadata.artist) == 0:
