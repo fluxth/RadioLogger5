@@ -1,7 +1,7 @@
 from stations.SiriusXMBase import SiriusXMBase
 
 class Z100XMStation(SiriusXMBase):
-    _NAME = 'Z100'
+    _NAME = 'Z100XM'
     _SHORTNAME = 'Z100'
 
     _XMCH = '8242'

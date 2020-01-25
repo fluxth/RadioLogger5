@@ -1,7 +1,7 @@
 from logger.station import Station, Metadata
 
 class AtimeBase(Station):
-    _NAME = 'ATime'
+    _NAME = 'Atime'
     _SHORTNAME = 'AT'
 
     _STID = ''
