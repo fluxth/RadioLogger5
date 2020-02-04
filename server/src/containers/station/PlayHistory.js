@@ -48,70 +48,81 @@ class PlayHistory extends React.Component {
 
     if (station_history === undefined) return null;
 
-    const gap_min = 1000*60*7
-    const dt_now = new Date()
+    const gap_min = 1000*60*7 // 7 mins
+    const now_dt = new Date()
 
     let prior_dt = null
     let first = true
     station_history.map((history, key) => {
-      const dt = new Date(history.ts)
+      let toth = false
+      while (true) {
+        const dt = new Date(history.ts)
 
-      if (prior_dt !== null || first === true) {
-        let diff = 0
+        // Top of the hour
+        if (prior_dt !== null && !toth) {
+          if (prior_dt.getHours() !== dt.getHours()) {
+            const toh_dt = new Date(dt)
+            toh_dt.setHours(toh_dt.getHours() + 1, 0, 0)
+            tr.push(
+              <tr key={key + 0.5} className="table-success">
+                <td>{this.formatTimestamp(toh_dt)}</td>
+                <td colSpan={2} className="text-center">
+                  TOP OF THE HOUR - {toh_dt.getHours()}:00
+                </td>
+                <td></td>
+              </tr>
+            )
 
-        if (first === true)
-          diff = dt_now - dt
-        else
-          diff = prior_dt - dt
-
-        if (diff > gap_min) {
-          tr.push(
-            <tr key={key + 0.3} className="table-secondary">
-              <td>{this.formatTimestamp(dt)}</td>
-              <td className="text-center">
-                { (first) ? 'LIVE ': '' }GAP
-              </td>
-              <td className="text-center">
-                {HumanizeDuration(diff, { 
-                  units: ['d', 'h', 'm'], 
-                  round: true 
-                })}
-              </td>
-              <td></td>
-            </tr>
-          )
+            prior_dt = toh_dt
+            toth = true
+            continue
+          }
         }
 
-        if (first === true)
-          first = false
-      }
+        // Gap
+        if (prior_dt !== null || first === true) {
+          let diff = 0
 
-      if (prior_dt !== null) {
-        if (prior_dt.getHours() !== dt.getHours()) {
-          tr.push(
-            <tr key={key + 0.5} className="table-success">
-              <td>{this.formatTimestamp(dt)}</td>
-              <td colSpan={2} className="text-center">
-                TOP OF THE HOUR - {prior_dt.getHours()}:00
-              </td>
-              <td></td>
-            </tr>
-          )
+          if (first === true)
+            diff = now_dt - dt
+          else
+            diff = prior_dt - dt
+
+          if (diff > gap_min) {
+            tr.push(
+              <tr key={key + 0.7} className="table-secondary">
+                <td>{this.formatTimestamp((first) ? now_dt : dt)}</td>
+                <td className="text-center">
+                  { (first) ? 'LIVE ': '' }GAP
+                </td>
+                <td className="text-center">
+                  {HumanizeDuration(diff, { 
+                    units: ['d', 'h', 'm'], 
+                    round: true 
+                  })}
+                </td>
+                <td></td>
+              </tr>
+            )
+          }
+
+          if (first === true)
+            first = false
         }
+
+        prior_dt = dt
+
+        return tr.push(
+          <tr key={key} className={history.default ? 'table-danger' : ''}>
+            <td>{this.formatTimestamp(dt)}</td>
+            <td>{history.artist}</td>
+            <td>
+              <Link to={`/track/${history.track_id}`}>{history.title}</Link>
+            </td>
+            <td></td>
+          </tr>
+        )
       }
-
-      prior_dt = dt
-
-      return tr.push(
-        <tr key={key} className={history.default ? 'table-danger' : ''}>
-          <td>{this.formatTimestamp(dt)}</td>
-          <td>{history.artist}</td>
-          <td>
-            <Link to={`/track/${history.track_id}`}>{history.title}</Link>
-          </td>
-          <td></td>
-        </tr>
-      )
     }) 
 
     return tr
