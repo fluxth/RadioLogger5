@@ -1,5 +1,5 @@
 import fetch from 'cross-fetch'
-import { API_URL } from './'
+import { API_URL } from '..'
 
 export const ACQUIRE_STATION_HISTORY = 'history/ACQUIRE_STATION_HISTORY'
 export const RECEIVE_STATION_HISTORY = 'history/RECEIVE_STATION_HISTORY'

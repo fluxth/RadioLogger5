@@ -6,7 +6,7 @@ import { connect } from 'react-redux'
 
 import { Row, Col } from 'react-bootstrap'
 
-import { fetchStationList } from '../../modules/station'
+import { fetchStationList } from '../../modules/stations'
 
 import StationList from './StationList'
 import LoggerStatus from './LoggerStatus'
@@ -30,8 +30,8 @@ class Dashboard extends React.Component {
 }
 
 
-const mapStateToProps = ({ station }) => ({
-  stations: station.stations,
+const mapStateToProps = ({ stations }) => ({
+  stations: stations.stations,
 })
 
 const mapDispatchToProps = dispatch =>

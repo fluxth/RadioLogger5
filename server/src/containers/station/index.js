@@ -11,7 +11,7 @@ import StationStatusIcon from '../station/StationStatusIcon'
 import Page404 from '../error/Page404'
 import PlayHistory from './PlayHistory'
 
-import { fetchStationList } from '../../modules/station'
+import { fetchStationList } from '../../modules/stations'
 
 
 class Station extends React.Component {
@@ -61,11 +61,11 @@ class Station extends React.Component {
   }
 }
 
-const mapStateToProps = ({ station }) => ({
-  stations: station.stations,
-  acquiring: station.acquireInProgress,
-  error: station.error,
-  stationInit: station.initialized,
+const mapStateToProps = ({ stations }) => ({
+  stations: stations.stations,
+  acquiring: stations.acquireInProgress,
+  error: stations.error,
+  stationInit: stations.initialized,
 })
 
 const mapDispatchToProps = dispatch =>

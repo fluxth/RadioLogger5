@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import HumanizeDuration from 'humanize-duration'
 
-import { fetchStationHistory } from '../../modules/history'
+import { fetchStationHistory } from '../../modules/station/history'
 
 class PlayHistory extends React.Component {
 

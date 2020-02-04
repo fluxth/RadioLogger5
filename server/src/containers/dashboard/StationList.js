@@ -10,7 +10,7 @@ import StationStatusIcon from '../station/StationStatusIcon'
 
 import { format } from 'timeago.js'
 
-import { fetchStationList } from '../../modules/station'
+import { fetchStationList } from '../../modules/stations'
 
 
 class StationList extends React.Component {
@@ -90,11 +90,11 @@ class StationList extends React.Component {
   }
 }
 
-const mapStateToProps = ({ station }) => ({
-  stations: station.stations,
-  acquiring: station.acquireInProgress,
-  error: station.error,
-  stationInit: station.initialized,
+const mapStateToProps = ({ stations }) => ({
+  stations: stations.stations,
+  acquiring: stations.acquireInProgress,
+  error: stations.error,
+  stationInit: stations.initialized,
 })
 
 const mapDispatchToProps = dispatch =>

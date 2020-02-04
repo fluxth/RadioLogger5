@@ -10,7 +10,7 @@ import { LinkContainer } from 'react-router-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import StationStatusIcon from '../station/StationStatusIcon'
 
-import { fetchStationList } from '../../modules/station'
+import { fetchStationList } from '../../modules/stations'
 
 
 class AppNavbar extends React.Component {
@@ -133,13 +133,13 @@ class AppNavbar extends React.Component {
   }
 }
 
-const mapStateToProps = ({ auth, station }) => ({
+const mapStateToProps = ({ auth, stations }) => ({
   auth: auth,
 
-  stations: station.stations,
-  acquiring: station.acquireInProgress,
-  error: station.error,
-  stationInit: station.initialized,
+  stations: stations.stations,
+  acquiring: stations.acquireInProgress,
+  error: stations.error,
+  stationInit: stations.initialized,
 })
 
 const mapDispatchToProps = dispatch =>
