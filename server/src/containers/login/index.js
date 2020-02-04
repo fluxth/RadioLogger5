@@ -6,7 +6,7 @@ import { connect } from 'react-redux'
 import { attemptLogin } from '../../modules/auth'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Form, Button, Row, Col } from 'react-bootstrap'
+import { Form, Button, Row, Col, Alert } from 'react-bootstrap'
 
 import { has } from 'lodash'
 
@@ -47,6 +47,16 @@ class Login extends React.Component {
     })
   }
 
+  renderAlert() {
+    const { variant, payload } = this.props.alertData
+    return (
+      <Alert variant={variant}>
+        <Alert.Heading>{payload.type}</Alert.Heading>
+        {payload.message}, please try again later. [{payload.code}]
+      </Alert>
+    )
+  }
+
   render() {
 
     if (this.props.isAuth === true) {
@@ -62,6 +72,7 @@ class Login extends React.Component {
         <Col sm={10} md={6}>
           <h1 className="text-center mt-2 mb-4">Login</h1>
           <Form onSubmit={this.login}>
+            { (this.props.showAlert === true) ? this.renderAlert() : '' }
             <Form.Group as={Row} controlId="formHorizontalUsername">
               <Form.Label className="text-right d-none d-sm-block" column sm={2}>
                 <FontAwesomeIcon icon="user" />
@@ -129,6 +140,8 @@ class Login extends React.Component {
 const mapStateToProps = ({ auth }) => ({
   isAuth: auth.authenticated,
   loggingIn: auth.acquireInProgress,
+  showAlert: auth.authAlert,
+  alertData: auth.authAlertData,
 })
 
 const mapDispatchToProps = dispatch =>

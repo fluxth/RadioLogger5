@@ -28,7 +28,7 @@ class Station extends React.Component {
       this.initializeStation()
   }
 
-  componentWillMount() {
+  componentDidMount() {
     // check if station list exists
     // load logs
 

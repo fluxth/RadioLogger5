@@ -15,7 +15,7 @@ import { fetchStationList } from '../../modules/station'
 
 class StationList extends React.Component {
 
-  componentWillMount() {
+  componentDidMount() {
     if (!this.props.stationInit)
       this.props.fetchStationList()
   }

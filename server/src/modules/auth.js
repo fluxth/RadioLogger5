@@ -9,6 +9,11 @@ export const LOGOUT = 'auth/LOGOUT'
 const initialState = {
   authenticated: false,
   acquireInProgress: false,
+  authAlert: false,
+  authAlertData: {
+    variant: null,
+    payload: null,
+  },
   userData: {
     accessToken: null,
     username: null,
@@ -20,6 +25,8 @@ export default (state = initialState, action) => {
     case ACQUIRE_TOKEN:
       return {
         ...state,
+        authAlert: false,
+        authAlertData: initialState['authAlertData'],
         acquireInProgress: true,
       }
 
@@ -32,6 +39,11 @@ export default (state = initialState, action) => {
     case RECEIVE_ERROR_TOKEN:
       return {
         ...state,
+        authAlert: true,
+        authAlertData: {
+          variant: 'danger',
+          payload: action.error,
+        },
         acquireInProgress: false,
       }
 
@@ -78,7 +90,7 @@ export const attemptLogin = (username, password, remember) => {
       }),
 
       error => {
-        console.log('An network error occurred.', error)
+        console.log('A network error occurred.', error)
         dispatch(receiveErrorToken({
           type: 'Network Error',
           message: error.message,

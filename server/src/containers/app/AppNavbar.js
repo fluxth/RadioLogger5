@@ -15,7 +15,7 @@ import { fetchStationList } from '../../modules/station'
 
 class AppNavbar extends React.Component {
 
-  componentWillMount() {
+  componentDidMount() {
     if (!this.props.stationInit && this.props.auth.authenticated)
       this.props.fetchStationList()
   }
@@ -51,7 +51,6 @@ class AppNavbar extends React.Component {
 
 
   render() {
-
     const loggedInNav = (
       <Navbar.Collapse id="responsive-navbar-nav">
         <Nav className="mr-auto">
@@ -86,6 +85,16 @@ class AppNavbar extends React.Component {
               <FontAwesomeIcon icon="user" /> { this.props.auth.userData.username }
             </span>
           } alignRight id="account-nav-dropdown">
+            <LinkContainer to="/settings">
+              <NavDropdown.Item>
+                <FontAwesomeIcon icon="cog" /> Settings
+              </NavDropdown.Item>
+            </LinkContainer>
+            <LinkContainer to="/profile">
+              <NavDropdown.Item>
+                <FontAwesomeIcon icon="user" /> Edit Profile
+              </NavDropdown.Item>
+            </LinkContainer>
             <LinkContainer to="/users">
               <NavDropdown.Item>
                 <FontAwesomeIcon icon="users" /> Manage Users
@@ -101,20 +110,23 @@ class AppNavbar extends React.Component {
     )
 
     const loggedOutNav = (
-      <Nav className="ml-auto">
-        <LinkContainer to="/auth/login">
-          <Nav.Link>
-            <FontAwesomeIcon icon="lock" /> Login
-          </Nav.Link>
-        </LinkContainer>
-      </Nav>
+      <Navbar.Collapse id="responsive-navbar-nav">
+        <Nav className="ml-auto">
+          <LinkContainer to="/auth/login">
+            <Nav.Link>
+              <FontAwesomeIcon icon="lock" /> Login
+            </Nav.Link>
+          </LinkContainer>
+        </Nav>
+      </Navbar.Collapse>
     )
 
     return (
-      <Navbar bg="dark" variant="dark" sticky="top">
+      <Navbar bg="dark" variant="dark" sticky="top" expand="sm">
         <LinkContainer to="/">
           <Navbar.Brand>RL5 GUI</Navbar.Brand>
         </LinkContainer>
+        <Navbar.Toggle aria-controls="responsive-navbar-nav" />
         { this.props.auth.authenticated ? loggedInNav : loggedOutNav }
       </Navbar>
     )

@@ -6,13 +6,6 @@ import { connect } from 'react-redux'
 
 import { Row, Col } from 'react-bootstrap'
 
-import {
-  increment,
-  incrementAsync,
-  decrement,
-  decrementAsync
-} from '../../modules/counter'
-
 import { fetchStationList } from '../../modules/station'
 
 import StationList from './StationList'
@@ -24,12 +17,11 @@ class Dashboard extends React.Component {
       <div>
         <h1 className="app-heading">Radio Logger v5 GUI</h1>
         <Row>
-          <Col>
+          <Col sm={12} md={8}>
             <StationList />
           </Col>
-          <Col>
+          <Col sm={12} md={4}>
             <LoggerStatus />
-            
           </Col>
         </Row>
       </div>
@@ -37,43 +29,14 @@ class Dashboard extends React.Component {
   }
 }
 
-/*<p>Count: {props.count}</p>
 
-            <p>
-              <button onClick={props.increment}>Increment</button>
-              <button onClick={props.incrementAsync} disabled={props.isIncrementing}>
-                Increment Async
-              </button>
-            </p>
-
-            <p>
-              <button onClick={props.decrement}>Decrement</button>
-              <button onClick={props.decrementAsync} disabled={props.isDecrementing}>
-                Decrement Async
-              </button>
-            </p>
-
-            <p>
-              <button onClick={() => props.changePage()}>
-                Go to about page via redux
-              </button>
-            </p>*/
-
-const mapStateToProps = ({ counter, station }) => ({
-  count: counter.count,
+const mapStateToProps = ({ station }) => ({
   stations: station.stations,
-  isIncrementing: counter.isIncrementing,
-  isDecrementing: counter.isDecrementing
 })
 
 const mapDispatchToProps = dispatch =>
   bindActionCreators(
     {
-      increment,
-      incrementAsync,
-      decrement,
-      decrementAsync,
-      changePage: () => push('/about-us'),
       fetchStationList,
     },
     dispatch

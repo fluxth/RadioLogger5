@@ -11,14 +11,14 @@ import './index.css'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { 
-  faTasks, faSatelliteDish, faClipboardList, faClipboardCheck, faUser, faUsers, faLock, faKey,
+  faTasks, faSatelliteDish, faClipboardList, faClipboardCheck, faUser, faUsers, faLock, faKey, faCog,
   faPlayCircle, faExclamationCircle, faDotCircle, faTimes,
   faSpinner, faSync,
   faChevronLeft, faExclamationTriangle, faPlus
 } from '@fortawesome/free-solid-svg-icons'
 
 library.add(
-  faTasks, faSatelliteDish, faClipboardList, faClipboardCheck, faUser, faUsers, faLock, faKey,
+  faTasks, faSatelliteDish, faClipboardList, faClipboardCheck, faUser, faUsers, faLock, faKey, faCog,
   faPlayCircle, faExclamationCircle, faDotCircle, faTimes,
   faSpinner, faSync,
   faChevronLeft, faExclamationTriangle, faPlus
