@@ -24,9 +24,7 @@ class App extends React.Component {
     super(props)
 
     this.initialized = false
-  }
 
-  componentWillMount() {
     let auth = sessionStorage.getItem(AUTH_STORAGE_KEY)
     if (auth === null)
       auth = localStorage.getItem(AUTH_STORAGE_KEY)
@@ -42,6 +40,7 @@ class App extends React.Component {
       this.initialized = true
     }
   }
+
 
   render() {
 
