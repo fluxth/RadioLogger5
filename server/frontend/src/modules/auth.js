@@ -51,7 +51,10 @@ export default (state = initialState, action) => {
       return {
         ...state,
         authenticated: true,
-        userData: action.credentials
+        userData: {
+          ...action.credentials,
+          expires: new Date(action.credentials.expires * 1000)
+        }
       }
 
     case LOGOUT:
@@ -97,7 +100,14 @@ export const attemptLogin = (username, password, remember) => {
           code: 1001
         }))
       }
-    )
+    ).catch((error) => {
+      console.log(error)
+      dispatch(receiveErrorToken({
+        type: 'Unexpected Error',
+        message: error.message,
+        code: 1901
+      }))
+    })
   }
 } 
 

@@ -29,7 +29,7 @@ export default (state = initialState, action) => {
       return {
         ...state,
         stations: action.payload.data,
-        lastUpdated: action.payload._ts,
+        lastUpdated: new Date(action.payload._ts * 1000),
         acquireInProgress: false,
       }
 
@@ -84,13 +84,20 @@ export const fetchStationList = () => {
       }),
 
       error => {
-        console.log('An network error occurred.', error)
+        console.log('A network error occurred.', error)
         dispatch(receiveErrorStationList({
           type: 'Network Error',
           message: error.message,
           code: 1001
         }))
       }
-    )
+    ).catch((error) => {
+      console.log(error)
+      dispatch(receiveErrorStationList({
+        type: 'Unexpected Error',
+        message: error.message,
+        code: 1901
+      }))
+    })
   }
 } 
