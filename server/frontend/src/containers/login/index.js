@@ -67,6 +67,8 @@ class Login extends React.Component {
       return <Redirect to="/dashboard" />
     }
 
+    const dt = new Date()
+
     return (
       <Row className="justify-content-sm-center">
         <Col sm={10} md={6}>
@@ -131,6 +133,13 @@ class Login extends React.Component {
               </Col>
             </Form.Group>
           </Form>
+          <div className="login-footer">
+            <hr />
+            <p className="text-muted text-center">
+                &copy; 2018-{ dt.getFullYear() }, All rights reserved.<br />
+                Developed by fluxdev
+            </p>
+          </div>
         </Col>
       </Row>
     )
