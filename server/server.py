@@ -45,16 +45,16 @@ def check_auth():
     return True
 
 def serve_api(path):
-
+    
     if path == 'authenticate':
         return jsonify({
             'status': 'ok',
             'data': {
                 'username': 'lolz',
                 'accessToken': 'asdf',
-                'expires': 'ts',
+                'expires': int(datetime.utcnow().timestamp()) + 60*60*24,
             },
-            '_ts': 0
+            '_ts': int(datetime.utcnow().timestamp())
         })
 
     auth = check_auth()
@@ -63,6 +63,7 @@ def serve_api(path):
 
     data = None
     error = None
+    payload_add = {}
 
     segment = path.split('/')
 
@@ -112,8 +113,23 @@ def serve_api(path):
             }
         else:
             if segment[2] == 'history':
-                history = Play.query.filter(Play.track.has(station=station))\
-                        .order_by(Play.id.desc()).limit(50).all()
+
+                limit = int(request.args.get('c', 100))
+                modifier = request.args.get('mod', None)
+                play_id = int(request.args.get('id', 0))
+
+                history = Play.query.filter(Play.track.has(station=station))
+
+                if modifier == 'old':
+                    history = history.filter(Play.id < play_id)
+                    payload_add['action'] = 'append'
+                elif modifier == 'new':
+                    history = history.filter(Play.id > play_id)
+                    payload_add['action'] = 'prepend'
+                else:
+                    payload_add['action'] = 'clear'
+
+                history = history.order_by(Play.id.desc()).limit(limit).all()
 
                 data = [{
                     'id': p.id,
@@ -142,6 +158,9 @@ def serve_api(path):
             'data': data,
             '_ts': int(datetime.utcnow().timestamp())
         }
+
+        if not payload_add == {}:
+            payload.update(payload_add)
 
     return jsonify(payload)
 

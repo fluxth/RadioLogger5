@@ -12,6 +12,8 @@ import HumanizeDuration from 'humanize-duration'
 import { history } from '../../store'
 import { fetchStationHistory } from '../../modules/station/history'
 
+import { findLast } from 'lodash'
+
 class PlayHistory extends React.Component {
 
   componentDidMount() {
@@ -38,7 +40,9 @@ class PlayHistory extends React.Component {
 
   initializeHistory() {
     if (!this.isHistoryInitialized())
-      this.props.fetchStationHistory(this.props.station.id)
+      this.props.fetchStationHistory(this.props.station.id, {
+        c: 100
+      })
   }
 
   // TODO: Move this to a helper class
@@ -54,12 +58,23 @@ class PlayHistory extends React.Component {
 
   loadMoreClick(e) {
     e.preventDefault()
+
+    const last_track = findLast(this.table_data, o => o.row_type === 'track')
+    this.props.fetchStationHistory(this.props.station.id, {
+      mod: 'old',
+      id: last_track.data.id,
+      c: 100
+    })
+
     return false
   }
 
   buildTableData(station, station_history) {
     const table_data = []
     const play_history = station_history.playHistory
+
+    if (play_history === undefined || play_history.length <= 0)
+      return table_data
 
     const gap_min = 1000*60*7 // TODO: Move this to settings
 
@@ -101,6 +116,7 @@ class PlayHistory extends React.Component {
       table_data.push(track_row)
 
       prior_dt = dt
+      return true
     })
     
     return table_data
@@ -112,8 +128,8 @@ class PlayHistory extends React.Component {
       play_type: history.default ? 'default_track' : 'track',
       color_class: history.default ? 'table-danger' : '',
       key: key,
+      data: history,
       timestamp: {
-        data: dt,
         text: this.formatTimestamp(dt),
         href: null,
       },
@@ -173,7 +189,7 @@ class PlayHistory extends React.Component {
     }
   }
 
-  renderTable(table_data) {
+  renderTable(table_data, station_history) {
     let tr = []
 
     // TODO: Move this to settings
@@ -185,75 +201,84 @@ class PlayHistory extends React.Component {
       'livegap_marker': true,
     }
 
-    if (table_data === undefined || table_data.length <= 0)
-      return null
+    if (table_data !== undefined && table_data.length > 0) {
+      table_data.map((table_item, key) => {
 
-    table_data.map((table_item, key) => {
+        if (!ENABLED_PLAYTYPES[table_item.play_type])
+          return false
+        
+        // Row type = track
+        if (['track'].includes(table_item.row_type)) {
+          tr.push(
+            <tr key={table_item.key} className={table_item.color_class}>
+              <td>{table_item.timestamp.text}</td>
+              <td>{table_item.artist.href === null ?
+                    table_item.artist.text :
+                    <Link to={table_item.artist.href}>
+                      {table_item.artist.text}
+                    </Link>
+                  }
+              </td>
+              <td>{table_item.title.href === null ?
+                    table_item.title.text :
+                    <Link to={table_item.title.href}>
+                      {table_item.title.text}
+                    </Link>
+                  }
+              </td>
+              <td>
+                { this.renderTableRowOptions(table_item.options) }
+              </td>
+            </tr>
+          )
+        }
+        
+        // Row type = options_marker
+        else if (['marker', 'options_marker'].includes(table_item.row_type)) {
+          tr.push(
+            <tr key={table_item.key} className={table_item.color_class}>
+              <td>{table_item.timestamp.text}</td>
+              <td colSpan={2} className="text-center">
+                {table_item.marker.text[0]}
+              </td>
+              <td>
+                { this.renderTableRowOptions(table_item.options) }
+              </td>
+            </tr>
+          )
+        }
 
-      if (!ENABLED_PLAYTYPES[table_item.play_type])
-        return
-      
-      // Row type = track
-      if (['track'].includes(table_item.row_type)) {
-        tr.push(
-          <tr key={table_item.key} className={table_item.color_class}>
-            <td>{table_item.timestamp.text}</td>
-            <td>{table_item.artist.href === null ?
-                  table_item.artist.text :
-                  <Link to={table_item.artist.href}>
-                    {table_item.artist.text}
-                  </Link>
-                }
-            </td>
-            <td>{table_item.title.href === null ?
-                  table_item.title.text :
-                  <Link to={table_item.title.href}>
-                    {table_item.title.text}
-                  </Link>
-                }
-            </td>
-            <td>
-              { this.renderTableRowOptions(table_item.options) }
-            </td>
-          </tr>
-        )
-      }
-      
-      // Row type = options_marker
-      else if (['marker', 'options_marker'].includes(table_item.row_type)) {
-        tr.push(
-          <tr key={table_item.key} className={table_item.color_class}>
-            <td>{table_item.timestamp.text}</td>
-            <td colSpan={2} className="text-center">
-              {table_item.marker.text[0]}
-            </td>
-            <td>
-              { this.renderTableRowOptions(table_item.options) }
-            </td>
-          </tr>
-        )
-      }
+        // Row type = track_marker
+        else if (['track_marker'].includes(table_item.row_type)) {
+          tr.push(
+            <tr key={table_item.key} className={table_item.color_class}>
+              <td>{table_item.timestamp.text}</td>
+              <td className="text-center">
+                {table_item.marker.text[0]}
+              </td>
+              <td className="text-center">
+                {table_item.marker.text[1]}
+              </td>
+              <td>
+                { this.renderTableRowOptions(table_item.options) }
+              </td>
+            </tr>
+          )
+        }
 
-      // Row type = track_marker
-      else if (['track_marker'].includes(table_item.row_type)) {
-        tr.push(
-          <tr key={table_item.key} className={table_item.color_class}>
-            <td>{table_item.timestamp.text}</td>
-            <td className="text-center">
-              {table_item.marker.text[0]}
-            </td>
-            <td className="text-center">
-              {table_item.marker.text[1]}
-            </td>
-            <td>
-              { this.renderTableRowOptions(table_item.options) }
-            </td>
-          </tr>
-        )
-      }
+        return true
+      })
+    }
 
-    })
-
+    if (station_history.acquireInProgress)
+      return [
+        ...tr,
+        <tr key={-1}>
+          <td colSpan={4} className="text-center text-muted">
+            <b><FontAwesomeIcon icon="spinner" spin /> Loading...</b>
+          </td>
+        </tr>
+      ]
     return tr
   }
 
@@ -282,6 +307,7 @@ class PlayHistory extends React.Component {
         option_items.push(obj)
       }
 
+      return true
     })
 
     return <div>{ option_items }</div>
@@ -295,18 +321,8 @@ class PlayHistory extends React.Component {
     const { station } = this.props
     const station_history = this.props.stationsHistory[station.id]
 
-    let table_body
-    if (station_history.acquireInProgress)
-      table_body = (
-        <tr>
-          <td colSpan={4} className="text-center text-muted">
-            <b><FontAwesomeIcon icon="spinner" spin /> Loading...</b>
-          </td>
-        </tr>
-      )
-    else
-      table_body = this.renderTable(this.buildTableData(station, station_history))
-    
+    this.table_data = this.buildTableData(station, station_history)
+
     return (
       <div>
         <h1>Play History of {station.name}</h1>
@@ -320,11 +336,11 @@ class PlayHistory extends React.Component {
             </tr>
           </thead>
           <tbody>
-            { table_body }
+            { this.renderTable(this.table_data, station_history) }
           </tbody>
         </Table>
         <div className="text-center footer-button">
-          <Button variant="secondary" disabled={station_history.acquireInProgress} onClick={this.loadMoreClick}>
+          <Button variant="secondary" disabled={station_history.acquireInProgress} onClick={this.loadMoreClick.bind(this)}>
             <FontAwesomeIcon icon="plus" /> Load More</Button>
         </div>
       </div>

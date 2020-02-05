@@ -51,8 +51,8 @@ class Login extends React.Component {
     const { variant, payload } = this.props.alertData
     return (
       <Alert variant={variant}>
-        <Alert.Heading>{payload.type}</Alert.Heading>
-        {payload.message}, please try again later. [{payload.code}]
+        <Alert.Heading>{payload.type} [{payload.code}]</Alert.Heading>
+        {payload.message}, please try again later.
       </Alert>
     )
   }
