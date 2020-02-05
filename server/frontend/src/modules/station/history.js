@@ -6,45 +6,59 @@ export const RECEIVE_STATION_HISTORY = 'history/RECEIVE_STATION_HISTORY'
 export const RECEIVE_ERROR_STATION_HISTORY = 'history/RECEIVE_ERROR_STATION_HISTORY'
 
 const initialState = {
-  playHistory: {},
-  lastUpdated: null,
-  error: null,
-  acquireInProgress: false,
-  initialized: {},
+  stations: {
+    // 0: {
+    //   playHistory: [],
+    //   lastUpdated: null,
+    //   error: null,
+    //   acquireInProgress: false,
+    //   initialized: false,
+    // }
+  }
 }
 
-// TODO: make all state independent of station/ separate by station id
-
 export default (state = initialState, action) => {
-  let output = null 
-
   switch (action.type) {
 
     case ACQUIRE_STATION_HISTORY:
-      output = {
+      return { 
         ...state,
-        error: null,
-        acquireInProgress: true,
+        stations: {
+          ...state.stations,
+          [action.station_id]: {
+            ...state.stations[action.station_id],
+            error: null,
+            acquireInProgress: true,
+            initialized: true
+          }
+        }  
       }
-      output['initialized'][action.station_id] = true
-
-      return output
 
     case RECEIVE_STATION_HISTORY:
-      output = {
+      return {
         ...state,
-        lastUpdated: action.payload._ts,
-        acquireInProgress: false,
+        stations: {
+          ...state.stations,
+          [action.station_id]: {
+            ...state.stations[action.station_id],
+            lastUpdated: new Date(action.payload._ts * 1000),
+            acquireInProgress: false,
+            playHistory: action.payload.data
+          }
+        }
       }
-      output['playHistory'][action.station_id] = action.payload.data
-
-      return output
 
     case RECEIVE_ERROR_STATION_HISTORY:
       return {
         ...state,
-        error: action.error,
-        acquireInProgress: false,
+        stations: {
+          ...state.stations,
+          [action.station_id]: {
+            ...state.stations[action.station_id],
+            error: action.error,
+            acquireInProgress: false,
+          }
+        }
       }
 
     default:
@@ -93,7 +107,7 @@ export const fetchStationHistory = (station_id) => {
       }),
 
       error => {
-        console.log('An network error occurred.', error)
+        console.log('A network error occurred.', error)
         dispatch(receiveErrorStationHistory(station_id, {
           type: 'Network Error',
           message: error,

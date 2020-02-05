@@ -16,8 +16,12 @@ import { fetchStationList } from '../../modules/stations'
 class AppNavbar extends React.Component {
 
   componentDidMount() {
-    if (!this.props.stationInit && this.props.auth.authenticated)
-      this.props.fetchStationList()
+    setTimeout(() => {
+      const { stationInit, auth } = this.props
+      if (!stationInit && auth.authenticated) {
+        this.props.fetchStationList()
+      }
+    }, 500)
   }
 
   logoutClick = () => {

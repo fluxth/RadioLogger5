@@ -1,1 +1,1 @@
-BUILD_DIR = './server/build'
+BUILD_DIR = './server/frontend/build'

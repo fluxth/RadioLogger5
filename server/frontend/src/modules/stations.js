@@ -1,5 +1,5 @@
 import fetch from 'cross-fetch'
-import { API_URL } from './'
+import { API_URL } from '.'
 
 export const ACQUIRE_STATION_LIST = 'station/ACQUIRE_STATION_LIST'
 export const RECEIVE_STATION_LIST = 'station/RECEIVE_STATION_LIST'
@@ -61,7 +61,8 @@ const receiveStationList = (payload) => {
 const receiveErrorStationList = (error) => {
   return {
     type: RECEIVE_ERROR_STATION_LIST,
-    error: error
+    error: error,
+    initialized: false
   }
 }
 
