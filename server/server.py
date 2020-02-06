@@ -85,7 +85,7 @@ def serve_api(path):
             }
 
 
-            lp_diff = (datetime.utcnow() - last_play).seconds
+            lp_diff = (datetime.utcnow() - last_play).total_seconds()
 
             if lp_diff > 0 and lp_diff <= 1500:
                 station_data['status'] = 'active'
