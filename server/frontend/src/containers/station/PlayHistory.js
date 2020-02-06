@@ -79,47 +79,72 @@ class PlayHistory extends React.Component {
     const gap_min = 1000*60*7 // TODO: Move this to settings
 
     let prior_dt = null
-    play_history.map((history, key) => {
-    
-      const now_dt = new Date()
-      const dt = new Date(history.ts)
+    for (let key = play_history.length - 1; key >= 0; key--) {
+      const history = play_history[key]
 
-      // Top of the hour
-      if (prior_dt !== null) {
-        if (prior_dt.getHours() !== dt.getHours()) {
-          const toth_dt = new Date(dt)
-          toth_dt.setHours(toth_dt.getHours() + 1, 0, 0)
+      let toth_done = false
+      for (let i = 0; true; i++) {
+      
+        const now_dt = new Date()
+        const dt = new Date(history.ts)
 
-          const toth_row = this.buildTothTableRow({ key, dt: toth_dt })
-          table_data.push(toth_row)
+        const row_data = []
 
-          prior_dt = toth_dt
+        // Ordinary tracks
+        if (!toth_done) {
+          const track_row = this.buildTrackTableRow({ station, history, key, dt })
+          row_data.push(track_row)
         }
-      }
 
-      // Gap and live gap detection
-      const is_first = (key <= 0)
-      if (prior_dt !== null || is_first) {
-        let diff = 0
-        if (is_first)
-          diff = now_dt - dt
-        else
-          diff = prior_dt - dt
+        // Gap and live gap detection
+        const is_first = (key <= 0)
+        if (prior_dt !== null || is_first) {
+          let diff = 0
+          if (is_first)
+            diff = now_dt - dt
+          else
+            diff = dt - prior_dt
 
-        if (diff > gap_min) {
-          const gap_row = this.buildGapTableRow({ key, dt, diff, live: is_first })
-          table_data.push(gap_row)
+          if (diff > gap_min) {
+            const gap_row = this.buildGapTableRow({ 
+              key: key - 0.7 + (i/10), 
+              dt: is_first ? now_dt : prior_dt, 
+              diff, 
+              live: is_first 
+            })
+
+            if (is_first)
+              row_data.push(gap_row)
+            else
+              row_data.unshift(gap_row)
+          }
         }
+
+        // Top of the hour
+        if (prior_dt !== null && !toth_done) {
+          if (prior_dt.getHours() !== dt.getHours()) {
+            const toth_dt = new Date(dt)
+            toth_dt.setHours(toth_dt.getHours(), 0, 0)
+
+            const toth_row = this.buildTothTableRow({ key: key - 0.3 + (i/10), dt: toth_dt })
+            table_data.push(toth_row)
+
+            prior_dt = dt
+            dt = toth_dt
+
+            toth_done = true
+            continue
+          }
+        }
+
+        table_data.push(...row_data)
+
+        prior_dt = dt
+        break
       }
-
-      const track_row = this.buildTrackTableRow({ station, history, key, dt })
-      table_data.push(track_row)
-
-      prior_dt = dt
-      return true
-    })
+    }
     
-    return table_data
+    return table_data.reverse()
   }
 
   buildTrackTableRow({ station, history, key, dt }) {
@@ -127,7 +152,7 @@ class PlayHistory extends React.Component {
       row_type: 'track',
       play_type: history.default ? 'default_track' : 'track',
       color_class: history.default ? 'table-danger' : '',
-      key: key,
+      key,
       data: history,
       timestamp: {
         text: this.formatTimestamp(dt),
@@ -150,7 +175,7 @@ class PlayHistory extends React.Component {
       row_type: 'marker',
       play_type: 'toth_marker',
       color_class: 'table-success',
-      key: key - 0.5,
+      key,
       timestamp: {
         data: dt,
         text: this.formatTimestamp(dt),
@@ -170,7 +195,7 @@ class PlayHistory extends React.Component {
       row_type: 'track_marker',
       play_type: (live) ? 'livegap_marker' : 'gap_marker',
       color_class: 'table-secondary',
-      key: key - 0.2,
+      key,
       timestamp: {
         data: dt,
         text: this.formatTimestamp(dt),
