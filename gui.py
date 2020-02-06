@@ -24,7 +24,8 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 db = SQLAlchemy(app, model_class=Base)
 
 # Route to /api/
-app.route('/api/v1/<path:path>')           (server.serve_api)
+app.route('/api/v1/<path:path>', 
+    methods=['GET', 'POST'])            (server.serve_api)
 
 # Catch all route /*
 app.route('/', defaults={'path': ''})   (server.serve_react)

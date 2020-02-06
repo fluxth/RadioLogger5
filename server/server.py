@@ -45,16 +45,31 @@ def check_auth():
     return True
 
 def serve_api(path):
-    
+
     if path == 'authenticate':
+
+        username = request.values.get('username', '')
+        password = request.values.get('password', '')
+
+        if True:
+            return jsonify({
+                'status': 'ok',
+                'data': {
+                    'username': 'flux',
+                    'accessToken': 'asdf',
+                    'expires': int(datetime.utcnow().timestamp()) + 60*60*24,
+                },
+                '_ts': int(datetime.utcnow().timestamp())
+            })
+
         return jsonify({
-            'status': 'ok',
-            'data': {
-                'username': 'lolz',
-                'accessToken': 'asdf',
-                'expires': int(datetime.utcnow().timestamp()) + 60*60*24,
+            'status': 'error',
+            'error': {
+                'code': 1202,
+                'type': 'Authentication Error',
+                'message': 'Invalid credentials'
             },
-            '_ts': int(datetime.utcnow().timestamp())
+            '_ts': int(datetime.utcnow().timestamp()),
         })
 
     auth = check_auth()
