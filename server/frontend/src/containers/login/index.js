@@ -61,7 +61,7 @@ class Login extends React.Component {
   renderAlert() {
     const { variant, payload } = this.props.alertData
     return (
-      <Alert variant={variant}>
+      <Alert variant={variant} dismissible onClose={this.props.dismissAlert.bind(this)}>
         <Alert.Heading>{payload.type} [{payload.code}]</Alert.Heading>
         {payload.message}, please try again later.
       </Alert>
@@ -82,6 +82,24 @@ class Login extends React.Component {
 
     return (
       <Row className="justify-content-sm-center">
+        <Modal show={this.state.modalShown} onHide={this.handleModalClose}>
+          <Modal.Header closeButton>
+            <Modal.Title>First time using RL5 GUI?</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>You can acquire your credentials to access this web GUI via the <code>RLManage</code> tool in your RadioLogger5 directory.</p>
+            <p><i>But how?</i></p>
+            <p>
+              Simply launch your terminal and use the following command to create an admin user:<br />
+              <code>./rlmanage.py user create-admin</code>
+            </p>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={this.handleModalClose}>
+              Thanks!
+            </Button>
+          </Modal.Footer>
+        </Modal>
         <Col sm={10} md={6}>
           <h1 className="text-center mt-2 mb-4">Login</h1>
           <Form onSubmit={this.login}>
@@ -145,6 +163,9 @@ class Login extends React.Component {
             </Form.Group>
           </Form>
           <div className="login-footer">
+            <p className="text-center links">
+              <Button variant="link" onClick={this.handleModalShow}>Don't know your credentials?</Button>
+            </p>
             <hr />
             <p className="text-muted text-center">
                 &copy; 2018-{ dt.getFullYear() }, All rights reserved.<br />
@@ -167,7 +188,8 @@ const mapStateToProps = ({ auth }) => ({
 const mapDispatchToProps = dispatch =>
   bindActionCreators(
     {
-      attemptLogin
+      attemptLogin,
+      dismissAlert
     },
     dispatch
   )

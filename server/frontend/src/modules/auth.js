@@ -3,6 +3,7 @@ import { API_URL, AUTH_STORAGE_KEY } from './'
 export const ACQUIRE_TOKEN = 'auth/ACQUIRE_TOKEN'
 export const RECEIVE_TOKEN = 'auth/RECEIVE_TOKEN'
 export const RECEIVE_ERROR_TOKEN = 'auth/RECEIVE_ERROR_TOKEN'
+export const DISMISS_ALERT = 'auth/DISMISS_ALERT'
 export const LOGIN = 'auth/LOGIN'
 export const LOGOUT = 'auth/LOGOUT'
 
@@ -47,6 +48,12 @@ export default (state = initialState, action) => {
         acquireInProgress: false,
       }
 
+    case DISMISS_ALERT:
+      return {
+        ...state,
+        authAlert: false,
+      }
+
     case LOGIN:
       return {
         ...state,
@@ -72,7 +79,17 @@ export default (state = initialState, action) => {
 export const attemptLogin = (username, password, remember) => {
   return dispatch => {
     dispatch(acquireToken())
-    return fetch(`${API_URL}/authenticate`).then(
+    return fetch(`${API_URL}/authenticate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8'
+      },
+      body: JSON.stringify({
+        username,
+        password,
+        remember
+      })
+    }).then(
       response => response.json().then(json => {
         if (json.status === 'ok') {
           dispatch(receiveToken())
@@ -136,6 +153,12 @@ export const login = (creds) => {
       type: LOGIN,
       credentials: creds
     })
+  }
+}
+
+export const dismissAlert = () => {
+  return {
+    type: DISMISS_ALERT
   }
 }
 

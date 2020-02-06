@@ -32,5 +32,9 @@ button:disabled {
 }
 
 .login-footer {
-  margin-top: 50px;
+  margin-top: 20px;
+}
+
+.login-footer .links {
+  margin: 30px 0;
 }
