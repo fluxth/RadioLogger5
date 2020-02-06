@@ -3,10 +3,12 @@ import { Redirect } from 'react-router'
 
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
-import { attemptLogin } from '../../modules/auth'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Form, Button, Row, Col, Alert } from 'react-bootstrap'
+import { Form, Button, Row, Col, Alert, Modal } from 'react-bootstrap'
+
+import { setPageTitle } from '../../helpers'
+import { attemptLogin, dismissAlert } from '../../modules/auth'
 
 import { has } from 'lodash'
 
@@ -21,10 +23,19 @@ class Login extends React.Component {
       'username': '',
       'password': '',
       'remember': true,
+      'modalShown': false,
     }
 
     this.login = this.login.bind(this)
     this.handleInputChange = this.handleInputChange.bind(this)
+
+  }
+
+  handleModalClose = () => this.setState({ modalShown: false });
+  handleModalShow = () => this.setState({ modalShown: true });
+
+  componentDidMount() {
+    setPageTitle('Login')
   }
 
   login(e) {

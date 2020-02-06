@@ -6,12 +6,17 @@ import { connect } from 'react-redux'
 
 import { Row, Col } from 'react-bootstrap'
 
+import { setPageTitle } from '../../helpers'
 import { fetchStationList } from '../../modules/stations'
 
 import StationList from './StationList'
 import LoggerStatus from './LoggerStatus'
 
 class Dashboard extends React.Component {
+  componentDidMount() {
+    setPageTitle('Dashboard')
+  }
+
   render() {
     return (
       <div>

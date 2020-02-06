@@ -8,6 +8,7 @@ import { find } from 'lodash'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import StationStatusIcon from '../station/StationStatusIcon'
 
+import { setPageTitle } from '../../helpers'
 import Page404 from '../error/Page404'
 import PlayHistory from './PlayHistory'
 
@@ -31,6 +32,8 @@ class Station extends React.Component {
   componentDidMount() {
     // check if station list exists
     // load logs
+
+    setPageTitle('Station')
 
     if (!this.props.stationInit)
       this.props.fetchStationList()
