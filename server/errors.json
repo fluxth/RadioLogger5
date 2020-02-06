@@ -1,0 +1,97 @@
+{
+    "10": {
+        "type": "Network Error",
+        "children": {
+            "0": {
+                "type": "Connection Error",
+                "children": {
+                    "0": {
+                        "name": "Generic connection error",
+                        "details": "Could not connect, please check your Internet connection"
+                    },
+                    "1": {
+                        "name": "Fetch error",
+                        "details": "Could not download \"{url}\", please check your Internet connection",
+                        "variables": ["url"]
+                    }
+                }
+            }
+        }
+    },
+    "11": {
+        "type": "API Error",
+        "children": {
+            "0": {
+                "type": "Endpoint Error",
+                "children": {
+                    "0": {
+                        "name": "Generic endpoint error",
+                        "details": "Endpoint error"
+                    },
+                    "1": {
+                        "name": "Unknown endpoint",
+                        "details": "Unknown endpoint \"{path}\"",
+                        "variables": ["path"]
+                    }
+                }
+            }
+        }
+    },
+    "12": {
+        "type": "Authentication Error",
+        "children": {
+            "0": {
+                "type": "Token Error",
+                "children": {
+                    "0": {
+                        "name": "Generic token error",
+                        "details": "Token error"
+                    },
+                    "1": {
+                        "name": "Token required",
+                        "details": "A token is required to access this resource"
+                    },
+                    "2": {
+                        "name": "Invalid token",
+                        "details": "A valid token is required to access this resource"
+                    }
+                }
+            },
+            "1": {
+                "type": "Login Error",
+                "children": {
+                    "0": {
+                        "name": "Generic login error",
+                        "details": "Login error"
+                    },
+                    "1": {
+                        "name": "Credentials required",
+                        "details": "Please make sure to fill your username and password"
+                    },
+                    "2": {
+                        "name": "Invalid credentials",
+                        "details": "Invalid username or password"
+                    }
+                }
+            }
+        }
+    },
+    "13": {
+        "type": "Model Error",
+        "children": {
+            "0": {
+                "type": "Station Error",
+                "children": {
+                    "0": {
+                        "name": "Generic station error",
+                        "details": "Station error"
+                    },
+                    "1": {
+                        "name": "Station not found",
+                        "details": "The station you requested could not be found"
+                    }
+                }
+            }
+        }
+    }
+}
