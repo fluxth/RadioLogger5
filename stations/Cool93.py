@@ -18,7 +18,7 @@ class Cool93Station(Station):
         return Metadata(title=title, artist=artist)
 
     def isDefaultMetadata(self, metadata):
-        if metadata.title == '' and metadata.artist == '':
+        if metadata.title == 'ONAIR' and metadata.artist == 'COOLfahrenheit':
             return True
 
         return False
