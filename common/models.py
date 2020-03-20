@@ -38,7 +38,7 @@ class Station(Base):
     __tablename__ = 'stations'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
+    name = Column(String(255), unique=True, nullable=False)
     tracks = relationship('Track', back_populates='station')
     error_logs = relationship('ErrorLog', back_populates='station')
     ts = Column(PaddedTimestamp, default=datetime.utcnow())
@@ -52,8 +52,8 @@ class ErrorLog(Base):
     id = Column(Integer, primary_key=True)
     station_id = Column(Integer, ForeignKey('stations.id'))
     station = relationship('Station', back_populates='error_logs')
-    owner = Column(String, nullable=False)
-    message = Column(String, nullable=False)
+    owner = Column(String(255), nullable=False)
+    message = Column(String(2047), nullable=False)
     details = Column(Text)
     ts = Column(PaddedTimestamp, default=datetime.utcnow())
 
@@ -64,8 +64,8 @@ class Track(Base):
     __tablename__ = 'tracks'
 
     id = Column(Integer, primary_key=True)
-    title = Column(String)
-    artist = Column(String)
+    title = Column(String(511))
+    artist = Column(String(511))
     extras = Column(LargeBinary)
     is_default = Column(Boolean, default=False)
     station_id = Column(Integer, ForeignKey('stations.id'), nullable=False)
