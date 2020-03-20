@@ -4,7 +4,8 @@ import os.path
 
 from server.auth import check_auth
 from server.api import (
-    handle_api,
+    handle_guest_api,
+    handle_authenticated_api,
     api_authenticate,
 )
 
@@ -12,16 +13,16 @@ from . import BUILD_DIR
 
 
 def serve_api(path):
-    # /authenticate $
-    if path == 'authenticate':
-        return api_authenticate()
+
+    GUEST_ENDPOINTS = ['authenticate']
+    if path in GUEST_ENDPOINTS:
+        return handle_guest_api(path)
 
     auth = check_auth()
     if not auth is True:
         return auth
 
-    # /*
-    return handle_api(path)
+    return handle_authenticated_api(path)
 
 def serve_react(path):
     if path == '':

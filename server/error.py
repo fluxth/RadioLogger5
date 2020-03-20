@@ -1,14 +1,19 @@
 import json
 from os.path import join
 
-from server import SERVER_DIR
+from server import FRONTEND_DIR
 
 
 class Errors(object):
     _errors = {}
+    _GuestAllowedErrors = (
+        (10,None,None),
+        (11,None,None),
+        (12,None,None),
+    )
 
     def __init__(self):
-        with open(join(SERVER_DIR, 'errors.json'), 'r') as f:
+        with open(join(FRONTEND_DIR, 'src/errors.json'), 'r') as f:
             self._errors = json.load(f)
 
     def getFromCode(self, code, format_vars={}, **kwargs):
@@ -45,3 +50,6 @@ class Errors(object):
             return target
 
         return False
+
+    def getErrors(self):
+        return self._errors

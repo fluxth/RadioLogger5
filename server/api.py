@@ -30,9 +30,7 @@ def get_error_json(error={ 'code': 0, 'type': 'Unknown Error', 'message': 'Unkno
     })
 
 
-def api_authenticate():
-    errors = Errors()
-
+def api_authenticate(error_handler):
     if True:
         return get_data_json({
             'username': 'flux',
@@ -41,7 +39,7 @@ def api_authenticate():
         })
 
     # Error: Invalid credentials
-    return get_error_json(errors.getFromCode(1212))
+    return get_error_json(error_handler.getFromCode(1212))
 
 def api_status():
     return get_data_json({
@@ -56,24 +54,30 @@ def api_stations():
     for s in stations:
         last_play = Play.query.filter(Play.track.has(station=s))\
                         .order_by(Play.id.desc())\
-                        .first().ts
+                        .first()
+
+        if last_play is not None:
+            last_play = last_play.ts
 
         station_data = {
             'id': s.id,
             'name': s.name,
             'tracks': len(s.tracks),
-            'last_play': last_play.replace(tzinfo=timezone.utc).isoformat(),
             'added': s.ts.replace(tzinfo=timezone.utc).isoformat(),
         }
 
+        if last_play is not None:
+            station_data['last_play'] = last_play.replace(tzinfo=timezone.utc).isoformat()
+            lp_diff = (datetime.utcnow() - last_play).total_seconds()
 
-        lp_diff = (datetime.utcnow() - last_play).total_seconds()
-
-        if lp_diff > 0 and lp_diff <= 1500:
-            station_data['status'] = 'active'
+            if lp_diff > 0 and lp_diff <= 1500:
+                station_data['status'] = 'active'
+            else:
+                station_data['status'] = 'stalled'
+            # TODO: Add disabled status from config too
         else:
+            station_data['last_play'] = None
             station_data['status'] = 'stalled'
-        # TODO: Add disabled status from config too
 
         data.append(station_data)
 
@@ -110,10 +114,24 @@ def api_station_history(station):
         'ts': p.ts.replace(tzinfo=timezone.utc).isoformat(),
     } for p in history], data_count=True, **payload_add)
 
+def handle_unknown_endpoint(path, error_handler):
+    # Error: Endpoint not found
+    return get_error_json(error_handler.getFromCode(1101, format_vars={ 'path': path }))
 
-def handle_api(path):
+def handle_guest_api(path):
+    # segment = path.split('/')
+    error_handler = Errors()
+
+    # /authenticate $
+    if path == 'authenticate':
+        return api_authenticate(error_handler)
+
+    # Error: Endpoint not found
+    return handle_unknown_endpoint(path, error_handler)
+
+def handle_authenticated_api(path):
     segment = path.split('/')
-    errors = Errors()
+    error_handler = Errors()
 
     # /status $
     if path == 'status':
@@ -131,7 +149,7 @@ def handle_api(path):
 
         if station is None:
             # Error: Station not found
-            return get_error_json(errors.getFromCode(1301, message=f'Station with id="{station_id}" not found'))
+            return get_error_json(error_handler.getFromCode(1301, message=f'Station with id="{station_id}" not found'))
 
         else:
             # /station/{id}/history $
@@ -139,4 +157,4 @@ def handle_api(path):
                 return api_station_history(station)
                 
     # Error: Endpoint not found
-    return get_error_json(errors.getFromCode(1101, format_vars={ 'path': path }))
+    return handle_unknown_endpoint(path, error_handler)

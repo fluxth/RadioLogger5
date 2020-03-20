@@ -49,11 +49,11 @@
                     },
                     "1": {
                         "name": "Token required",
-                        "details": "A token is required to access this resource"
+                        "details": "An access token is required to view this resource"
                     },
                     "2": {
                         "name": "Invalid token",
-                        "details": "A valid token is required to access this resource"
+                        "details": "A valid access token is required to view this resource"
                     }
                 }
             },
