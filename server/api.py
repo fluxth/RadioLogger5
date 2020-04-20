@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from common.models import Station, Play
 
 from server.error import Errors
+from server.auth import issue_token
 
 
 def get_data_json(data={}, status='ok', data_count=False, **kwargs):
@@ -31,12 +32,19 @@ def get_error_json(error={ 'code': 0, 'type': 'Unknown Error', 'message': 'Unkno
 
 
 def api_authenticate(error_handler):
+    username = request.json.get('username')
+    password = request.json.get('password')
+
+    if username is None or password is None:
+        return get_error_json(error_handler.getFromCode(1211))
+
+    # TODO: Actual login
     if True:
-        return get_data_json({
-            'username': 'flux',
-            'accessToken': 'asdf',
-            'expires': int(datetime.utcnow().timestamp()) + 60*60*24,
-        })
+        payload = {}
+
+        payload.update(issue_token(username))
+
+        return get_data_json(payload)
 
     # Error: Invalid credentials
     return get_error_json(error_handler.getFromCode(1212))

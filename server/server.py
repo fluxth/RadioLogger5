@@ -7,20 +7,20 @@ from server.api import (
     handle_guest_api,
     handle_authenticated_api,
     api_authenticate,
+    get_error_json
 )
 
 from . import BUILD_DIR
 
 
 def serve_api(path):
-
     GUEST_ENDPOINTS = ['authenticate']
     if path in GUEST_ENDPOINTS:
         return handle_guest_api(path)
 
     auth = check_auth()
-    if not auth is True:
-        return auth
+    if auth is not True:
+        return get_error_json(auth)
 
     return handle_authenticated_api(path)
 
