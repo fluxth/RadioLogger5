@@ -263,6 +263,13 @@ class StationTool(Tool):
                         r=colorama.Style.RESET_ALL,
                     ))
 
+                    if track.artist.strip() == "":
+                        choice = input(colorama.Fore.RED + 'Artist is blank, continue? [y/N] > ' + colorama.Style.RESET_ALL).lower()
+
+                        if not (choice == 'y' or choice == '1'):
+                            print(colorama.Fore.RED + 'Spotify link skipped for this track.' + colorama.Style.RESET_ALL)
+                            continue
+
                     result = searcher.search(track.title, track.artist)
 
                     if result is False:
