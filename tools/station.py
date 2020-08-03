@@ -231,6 +231,11 @@ class StationTool(Tool):
 
             searcher = SpotifySearcher(self.config.get('spotify_searcher'))
 
+            process_no_artist = False
+            process_no_artist_choice = input(colorama.Fore.BLUE + 'Do you want to process tracks with no artist values? [y/N] > '+ colorama.Style.RESET_ALL).lower()
+            if process_no_artist_choice == 'y' or process_no_artist_choice == '1':
+                process_no_artist = True
+
             skip = int(skip)
             if skip > 0 and skip < len(tracks):
                 cnt = skip
@@ -252,6 +257,16 @@ class StationTool(Tool):
                         track.artist
                     ) + colorama.Style.RESET_ALL)
                 else:
+                    if not process_no_artist and len(track.artist.strip()) <= 0:
+                        print(colorama.Fore.YELLOW + '\n\n[{}/{}] Skipping [{}] "{}" by "{}", Not processing tracks with no artist.'.format(
+                            cnt,
+                            total_tracks,
+                            track.id,
+                            track.title,
+                            track.artist
+                        ))
+                        continue
+
                     print('\n\n{c}[{}/{}] Processing [{}] {r}{m}"{}"{r}{c} by {r}{m}"{}"{r}{c}...{r}'.format(
                         cnt,
                         total_tracks,
