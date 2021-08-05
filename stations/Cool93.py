@@ -4,7 +4,7 @@ class Cool93Station(Station):
     _NAME = 'Cool93'
     _SHORTNAME = 'C93'
 
-    _URL = 'http://www.coolism.net/radio/dab/nowplaying.php'
+    _URL = 'https://www.coolism.net/radio/api_song.php'
 
     def parseResponse(self, payload):
 
